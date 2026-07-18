@@ -1,0 +1,4340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DE Mastery Tracker & Schedule V2</title>
+  <!-- Google Fonts for premium typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* CSS Variables for Premium Minimalist Light Theme */
+    :root {
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      
+      --accent-indigo: #4f46e5;
+      --accent-indigo-hover: #4338ca;
+      --accent-indigo-light: #e0e7ff;
+      
+      --accent-success: #10b981;
+      --accent-success-light: #d1fae5;
+      --accent-success-hover: #059669;
+      
+      --accent-warning: #f59e0b;
+      --accent-warning-light: #fef3c7;
+      
+      --accent-danger: #ef4444;
+      --accent-danger-light: #fee2e2;
+      
+      --border-color: #e2e8f0;
+      --border-focus: #cbd5e1;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+      
+      --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Core Reset & Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+    }
+
+    /* Layout System */
+    .app-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background-color: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+
+    .brand-section {
+      margin-bottom: 24px;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+      transition: var(--transition-base);
+    }
+
+    .nav-item:hover {
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background-color: var(--accent-indigo-light);
+      color: var(--accent-indigo);
+      font-weight: 600;
+    }
+
+    .nav-icon {
+      font-size: 16px;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+      margin-top: 24px;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 40px;
+    }
+
+    /* Top Sticky Dashboard Banner */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .simulated-date-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--bg-app);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .simulated-date-container input[type="date"] {
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Level and XP Header HUD */
+    .level-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .level-badge {
+      background-color: var(--accent-indigo);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+    }
+
+    .xp-bar-outer {
+      width: 140px;
+      height: 8px;
+      background-color: #f1f5f9;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .xp-bar-inner {
+      height: 100%;
+      background-color: var(--accent-indigo);
+      width: 0%;
+      transition: width 0.3s ease-out;
+    }
+
+    /* Gamified Widgets in Header */
+    .header-widgets {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .widget-item {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      padding-right: 20px;
+    }
+
+    .widget-item:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+
+    .widget-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+    }
+
+    .widget-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .widget-val.coin {
+      color: var(--accent-warning);
+    }
+
+    .widget-val.streak {
+      color: #f97316; /* Fire orange */
+      animation: pulse-streak 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-streak {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Buttons & Actions */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-card);
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .btn:hover {
+      background-color: var(--bg-app);
+      border-color: var(--border-focus);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-indigo);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-indigo-hover);
+    }
+
+    .btn-success {
+      background-color: var(--accent-success);
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background-color: var(--accent-success-hover);
+    }
+
+    /* View Containers */
+    .view-pane {
+      display: none;
+      animation: fade-in 0.2s ease-out;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .view-pane.active {
+      display: flex;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stats Grid Dashboard */
+    .stats-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-icon {
+      font-size: 18px;
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .stat-progress-bar {
+      height: 4px;
+      background-color: var(--bg-app);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .stat-progress-fill {
+      height: 100%;
+      background-color: var(--accent-indigo);
+      width: 0%;
+      transition: width 0.4s ease-out;
+    }
+
+    /* Schedule View Layout */
+    .schedule-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+    }
+
+    /* Schedule Browser Column */
+    .schedule-browser {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .month-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .month-tab-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition-base);
+    }
+
+    .month-tab-btn:hover {
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+    }
+
+    .month-tab-btn.active {
+      background-color: var(--text-primary);
+      color: white;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .week-btn {
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: var(--bg-card);
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition-base);
+    }
+
+    .week-btn:hover {
+      background-color: var(--bg-app);
+    }
+
+    .week-btn.active {
+      border-color: var(--accent-indigo);
+      background-color: var(--accent-indigo-light);
+      color: var(--accent-indigo);
+    }
+
+    .week-btn.completed {
+      border-color: var(--accent-success);
+      background-color: var(--accent-success-light);
+      color: var(--accent-success-hover);
+    }
+
+    .days-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .day-row-card {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .day-row-card:hover {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+
+    .day-row-card.active {
+      border-color: var(--accent-indigo);
+      background-color: rgba(79, 70, 229, 0.01);
+      box-shadow: 0 0 0 1px var(--accent-indigo);
+    }
+
+    .day-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .day-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .day-focus-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .day-badge-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+      align-items: center;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-gray { background-color: #f1f5f9; color: #475569; }
+    .badge-indigo { background-color: var(--accent-indigo-light); color: var(--accent-indigo); }
+    .badge-success { background-color: var(--accent-success-light); color: var(--accent-success-hover); }
+    .badge-warning { background-color: var(--accent-warning-light); color: #b45309; }
+    .badge-danger { background-color: var(--accent-danger-light); color: var(--accent-danger); }
+
+    .day-status-indicator {
+      font-size: 20px;
+      margin-left: 16px;
+    }
+
+    /* Selected Day Detail Sidebar Panel */
+    .day-details-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 104px;
+      height: fit-content;
+      max-height: calc(100vh - 128px);
+      overflow-y: auto;
+    }
+
+    .panel-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    .task-checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-item-card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .task-item-card:hover {
+      border-color: var(--border-focus);
+    }
+
+    .task-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .task-desc {
+      font-size: 13px;
+      color: var(--text-primary);
+      padding-left: 22px;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      padding-left: 22px;
+    }
+
+    .btn-status-toggle {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-card);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-status-toggle.active-completed {
+      background-color: var(--accent-success-light);
+      border-color: var(--accent-success);
+      color: var(--accent-success-hover);
+    }
+
+    .btn-status-toggle.active-inprogress {
+      background-color: var(--accent-warning-light);
+      border-color: var(--accent-warning);
+      color: #b45309;
+    }
+
+    /* Matching Questions Section inside Selected Day */
+    .matching-questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .matching-q-card {
+      background-color: var(--bg-app);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .matching-q-card:hover {
+      border-color: var(--accent-indigo);
+      background-color: var(--accent-indigo-light);
+    }
+
+    .matching-q-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .matching-q-meta {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .matching-q-chevron {
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    /* Textarea & Inputs */
+    .input-field {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: var(--transition-base);
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 2px var(--accent-indigo-light);
+    }
+
+    .textarea-field {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      outline: none;
+      resize: vertical;
+      min-height: 80px;
+      transition: var(--transition-base);
+    }
+
+    .textarea-field:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 2px var(--accent-indigo-light);
+    }
+
+    /* Daily Quests HUD widget on Schedule page */
+    .daily-quests-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .quest-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      border-bottom: 1px dotted var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .quest-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .quest-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .quest-title {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .quest-rewards {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent-success-hover);
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Achievements Grid */
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .achievement-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-base);
+    }
+
+    .achievement-card.locked {
+      opacity: 0.5;
+      filter: grayscale(1);
+      border-style: dashed;
+    }
+
+    .achievement-icon {
+      font-size: 24px;
+    }
+
+    .achievement-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .achievement-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .achievement-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Question Bank Views */
+    .qbank-header {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .qbank-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .qbank-tab-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition-base);
+    }
+
+    .qbank-tab-btn:hover {
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+    }
+
+    .qbank-tab-btn.active {
+      background-color: var(--accent-indigo-light);
+      color: var(--accent-indigo);
+      font-weight: 700;
+    }
+
+    .filters-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .filter-select {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      background-color: var(--bg-card);
+      outline: none;
+      min-width: 140px;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      border-color: var(--accent-indigo);
+    }
+
+    /* Question Bank Table Layout */
+    .qbank-body {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .qbank-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .qbank-table th {
+      background-color: var(--bg-app);
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .qbank-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .qbank-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .qbank-table tr {
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .qbank-table tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    .difficulty-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .difficulty-label.easy { color: var(--accent-success-hover); }
+    .difficulty-label.medium { color: var(--accent-warning); }
+    .difficulty-label.hard { color: var(--accent-danger); }
+
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pagination-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Rewards Shop Table View */
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .shop-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition-base);
+    }
+
+    .shop-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .shop-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .shop-icon {
+      font-size: 28px;
+    }
+
+    .shop-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .shop-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .shop-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      border-top: 1px dotted var(--border-color);
+      padding-top: 12px;
+    }
+
+    .shop-price {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent-warning);
+    }
+
+    /* Matrix Hacker dark monospace theme for code box */
+    .matrix-editor-theme {
+      background-color: #000000 !important;
+      color: #00ff00 !important;
+      font-family: var(--font-code) !important;
+      border-color: #008800 !important;
+      text-shadow: 0 0 3px #00ff00;
+    }
+
+    /* Question Workspace Modal with AI integration split */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background-color: var(--bg-card);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 1200px; /* Wider for AI side by side */
+      height: 90%;
+      max-height: 850px;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-color);
+      animation: modal-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modal-slide-up {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .modal-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .modal-category-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-close-btn {
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: var(--transition-base);
+    }
+
+    .modal-close-btn:hover {
+      color: var(--text-primary);
+    }
+
+    /* Modal Navigation tabs */
+    .modal-nav-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 24px;
+      background-color: var(--bg-app);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-nav-btn {
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      transition: var(--transition-base);
+    }
+
+    .modal-nav-btn.active {
+      color: var(--accent-indigo);
+      border-bottom-color: var(--accent-indigo);
+      font-weight: 700;
+    }
+
+    .modal-body {
+      flex: 1;
+      padding: 24px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* Split panel */
+      gap: 24px;
+    }
+
+    .modal-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      height: 100%;
+      padding-right: 8px;
+    }
+
+    .workspace-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .workspace-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-app);
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+    }
+
+    /* Monospace Monitored Code Editor */
+    .code-editor-textarea {
+      font-family: var(--font-code);
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #0f172a; /* Slate 900 dark bg for code editing */
+      color: #e2e8f0;
+      resize: vertical;
+      min-height: 400px;
+      outline: none;
+    }
+
+    .code-editor-textarea:focus {
+      border-color: var(--accent-indigo);
+    }
+
+    /* Star Confidence Selector */
+    .stars-selector {
+      display: inline-flex;
+      gap: 4px;
+    }
+
+    .star-btn {
+      font-size: 18px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: var(--transition-base);
+    }
+
+    .star-btn.filled {
+      color: var(--accent-warning);
+    }
+
+    /* AI Coach Panel & Subtabs Layout */
+    .ai-coach-panel {
+      background-color: #fafafa;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .ai-coach-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background-color: #f1f5f9;
+    }
+
+    .ai-subtab-btn {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .ai-subtab-btn.active {
+      background-color: white;
+      color: var(--accent-indigo);
+      border-bottom-color: var(--accent-indigo);
+    }
+
+    .ai-coach-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .ai-bubble {
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .ai-bubble.coach {
+      border-left: 3px solid var(--accent-indigo);
+    }
+
+    .ai-bubble.user {
+      background-color: var(--accent-indigo-light);
+      border-color: rgba(79, 70, 229, 0.2);
+      border-left: 3px solid var(--accent-indigo);
+      text-align: right;
+    }
+
+    .ai-coach-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--border-color);
+      background-color: white;
+    }
+
+    .ai-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--accent-indigo);
+      padding: 24px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--accent-indigo-light);
+      border-top-color: var(--accent-indigo);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Level Up Banner Overlay */
+    .levelup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(15, 23, 42, 0.8);
+      z-index: 5000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      animation: fade-in 0.3s ease-out;
+    }
+
+    .levelup-overlay.active {
+      display: flex;
+    }
+
+    .levelup-card {
+      background-color: white;
+      border-radius: 24px;
+      padding: 40px;
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+      box-shadow: var(--shadow-xl);
+      animation: modal-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .levelup-title {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-indigo), #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: pulsate 1.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulsate {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    /* Floating motivational buddy */
+    .motivational-buddy-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .buddy-avatar {
+      font-size: 32px;
+    }
+
+    .buddy-quote-box {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Coins & Balance Credits Floating Animation Overlay Canvas */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 2000;
+    }
+
+    /* Projects Grid View */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .project-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: var(--transition-base);
+    }
+
+    .project-card:hover {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .project-card.mega {
+      border-left: 4px solid var(--accent-indigo);
+    }
+
+    .project-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .project-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .project-deliverable {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Custom Responsive Styling */
+    @media (max-width: 960px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        position: static;
+      }
+      .main-content {
+        padding: 16px;
+        height: auto;
+        overflow-y: visible;
+      }
+      .schedule-layout {
+        grid-template-columns: 1fr;
+      }
+      .day-details-panel {
+        position: static;
+        max-height: none;
+      }
+      .stats-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .modal-body {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particles Confetti Overlay Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Level Up Overlay Modal -->
+  <div class="levelup-overlay" id="levelup-overlay">
+    <div class="levelup-card">
+      <span style="font-size: 64px;">⚡</span>
+      <h2 class="levelup-title">LEVEL UP!</h2>
+      <p style="font-size: 16px; color: var(--text-secondary);" id="levelup-text">You reached Level 2</p>
+      <div style="font-size: 14px; font-weight: 700; color: var(--accent-success-hover); background-color: var(--accent-success-light); padding: 8px 16px; border-radius: 99px;">
+        🎁 Cash Bonus: +200 rs!
+      </div>
+      <button class="btn btn-primary" style="padding: 10px 24px; margin-top: 10px;" onclick="closeLevelupOverlay()">Claim Rewards</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div>
+        <div class="brand-section">
+          <div class="brand-title">
+            <span>💻</span> DE Mastery
+          </div>
+          <div class="brand-subtitle">Entry-Level Roadmap</div>
+        </div>
+
+        <nav class="nav-menu">
+          <button class="nav-item active" onclick="switchView('schedule')">
+            <span class="nav-icon">📅</span> Schedule Tracker
+          </button>
+          <button class="nav-item" onclick="switchView('qbank')">
+            <span class="nav-icon">📝</span> Question Banks
+          </button>
+          <button class="nav-item" onclick="switchView('shop')">
+            <span class="nav-icon">🛒</span> Rewards Shop
+          </button>
+          <button class="nav-item" onclick="switchView('projects')">
+            <span class="nav-icon">🏆</span> Projects & Milestones
+          </button>
+          <button class="nav-item" onclick="switchView('cheatsheets')">
+            <span class="nav-icon">📄</span> Custom Cheat Sheets
+          </button>
+          <button class="nav-item" onclick="switchView('settings')">
+            <span class="nav-icon">⚙️</span> Settings & Backup
+          </button>
+        </nav>
+      </div>
+
+      <!-- Motivation buddy -->
+      <div class="sidebar-footer">
+        <div class="motivational-buddy-container">
+          <span class="buddy-avatar" id="buddy-avatar">🦉</span>
+          <div class="buddy-quote-box" id="buddy-quote">
+            "Ready to write some jobs? Start with Python variables."
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Sticky Banner Dashboard -->
+      <header class="dashboard-header">
+        <div class="header-left">
+          <div class="header-title-row">
+            <h1 id="view-title" style="font-size: 20px; font-weight: 800;">Roadmap Schedule</h1>
+            <div class="simulated-date-container" title="Change to simulate date transitions and penalty triggers">
+              <span>📅 Target Date:</span>
+              <input type="date" id="simulated-date-input" onchange="handleSimulatedDateChange()">
+            </div>
+          </div>
+          
+          <!-- HUD Info for levels and XP -->
+          <div class="level-container">
+            <span class="level-badge" id="hud-level-label">Lvl 1</span>
+            <div class="xp-bar-outer" title="Complete tasks, solve questions, and claim checks to level up!">
+              <div class="xp-bar-inner" id="hud-xp-bar"></div>
+            </div>
+            <span style="font-size: 11px; color: var(--text-secondary);" id="hud-xp-label">0 / 200 XP</span>
+          </div>
+        </div>
+
+        <div class="header-widgets">
+          <div class="widget-item">
+            <span class="widget-label">Lifetime Balance</span>
+            <span class="widget-val coin" id="widget-balance">💰 0 rs</span>
+          </div>
+          <div class="widget-item">
+            <span class="widget-label">Weekly Completed</span>
+            <span class="widget-val" id="widget-week-progress">0/7 Days</span>
+          </div>
+          <div class="widget-item">
+            <span class="widget-label">Study Streak</span>
+            <span class="widget-val streak" id="widget-streak">🔥 0 Days</span>
+          </div>
+          <div>
+            <button class="btn btn-success" id="btn-daily-checkin" onclick="claimDailyCheckin()">
+              📆 Daily Check-In (+10rs)
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ================= SCHEDULE VIEW ================= -->
+      <section id="view-schedule" class="view-pane active">
+        
+        <!-- Overall Progress Statistics Dashboard -->
+        <div class="stats-summary-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Overall Roadmap</span>
+              <span class="stat-icon">📈</span>
+            </div>
+            <span class="stat-number" id="stat-overall-pct">0%</span>
+            <div class="stat-progress-bar">
+              <div class="stat-progress-fill" id="stat-overall-fill"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">SQL Solved</span>
+              <span class="stat-icon">📊</span>
+            </div>
+            <span class="stat-number" id="stat-sql-solved">0/180</span>
+            <div class="stat-progress-bar">
+              <div class="stat-progress-fill" id="stat-sql-fill" style="background-color: var(--accent-success);"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">DSA Solved</span>
+              <span class="stat-icon">🧩</span>
+            </div>
+            <span class="stat-number" id="stat-dsa-solved">0/148</span>
+            <div class="stat-progress-bar">
+              <div class="stat-progress-fill" id="stat-dsa-fill" style="background-color: #f97316;"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">DE & Spark Mastery</span>
+              <span class="stat-icon">⚡</span>
+            </div>
+            <span class="stat-number" id="stat-pyspark-solved">0/165</span>
+            <div class="stat-progress-bar">
+              <div class="stat-progress-fill" id="stat-pyspark-fill" style="background-color: var(--accent-indigo);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule details layout -->
+        <div class="schedule-layout">
+          <!-- Calendar Explorer Column -->
+          <div class="schedule-browser">
+            
+            <!-- Daily Quests Section -->
+            <div class="daily-quests-panel">
+              <span class="workspace-label">⚡ Daily Quests (Earn Extra Rewards)</span>
+              <div id="daily-quests-container">
+                <!-- Dynamically Rendered daily quests -->
+              </div>
+            </div>
+
+            <div class="month-tabs" id="month-tabs-container">
+              <!-- Dynamically rendered Month tabs -->
+            </div>
+            <div class="week-grid" id="week-tabs-container">
+              <!-- Dynamically rendered Week buttons -->
+            </div>
+            <div class="days-list" id="days-list-container">
+              <!-- Dynamically rendered Days rows -->
+            </div>
+          </div>
+
+          <!-- Day details panel -->
+          <div class="day-details-panel" id="day-details-panel">
+            <div style="text-align: center; color: var(--text-tertiary); padding: 40px 0;">
+              Select a calendar day to see target deliverables, task checklist, and notes
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= QUESTION BANK VIEW ================= -->
+      <section id="view-qbank" class="view-pane">
+        
+        <div class="qbank-header">
+          <div class="qbank-tabs">
+            <button class="qbank-tab-btn active" onclick="switchQBankTab('sql')">SQL Bank (180)</button>
+            <button class="qbank-tab-btn" onclick="switchQBankTab('dsa')">DSA Problems (148)</button>
+            <button class="qbank-tab-btn" onclick="switchQBankTab('pyspark')">PySpark Coding (55)</button>
+            <button class="qbank-tab-btn" onclick="switchQBankTab('concepts')">DE Core Concepts (110)</button>
+            <button class="qbank-tab-btn" onclick="switchQBankTab('interview')">Interview Prep (55)</button>
+          </div>
+
+          <div class="filters-row">
+            <div class="search-input-wrapper">
+              <input type="text" id="qbank-search-input" class="input-field" placeholder="🔍 Search question title, category or content..." oninput="applyQBankFilters()">
+            </div>
+            <select id="qbank-filter-difficulty" class="filter-select" onchange="applyQBankFilters()">
+              <option value="">All Difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <select id="qbank-filter-status" class="filter-select" onchange="applyQBankFilters()">
+              <option value="">All Statuses</option>
+              <option value="unsolved">Unsolved</option>
+              <option value="inprogress">In Progress</option>
+              <option value="solved">Solved</option>
+            </select>
+            <select id="qbank-filter-category" class="filter-select" onchange="applyQBankFilters()">
+              <option value="">All Categories</option>
+            </select>
+            <button class="btn" onclick="resetQBankFilters()">Clear Filters</button>
+          </div>
+        </div>
+
+        <div class="qbank-body">
+          <table class="qbank-table">
+            <thead>
+              <tr id="qbank-table-headers">
+                <!-- Dynamically Rendered table columns -->
+              </tr>
+            </thead>
+            <tbody id="qbank-table-body">
+              <!-- Dynamically Rendered rows -->
+            </tbody>
+          </table>
+
+          <div class="pagination-bar">
+            <span id="qbank-pagination-info">Showing 0-0 of 0</span>
+            <div class="pagination-actions">
+              <button class="btn" id="btn-page-prev" onclick="changeQBankPage(-1)">Previous</button>
+              <button class="btn" id="btn-page-next" onclick="changeQBankPage(1)">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REWARDS SHOP VIEW ================= -->
+      <section id="view-shop" class="view-pane">
+        <div class="dashboard-header" style="flex-direction: column; align-items: stretch; gap: 10px;">
+          <h3 style="font-size: 16px; font-weight: 700;">🛒 Power-Up Rewards Shop</h3>
+          <p style="font-size: 13px; color: var(--text-secondary);">
+            Spend your study-earned cash balance on boosts, custom editor designs, avatars, or streak protection items!
+          </p>
+          <div style="font-size: 12px; font-weight: 700; color: var(--accent-indigo);" id="shop-inventory-label">
+            Owned inventory: Freezes: 0 | XP Boosts: 0 | Golden Owl: Locked | Matrix Theme: Locked
+          </div>
+        </div>
+
+        <div class="shop-grid" id="shop-grid-container">
+          <!-- Dynamically Rendered Shop Items -->
+        </div>
+      </section>
+
+      <!-- ================= PROJECTS & MILESTONES VIEW ================= -->
+      <section id="view-projects" class="view-pane">
+        
+        <div class="dashboard-header" style="flex-direction: column; align-items: stretch; gap: 16px;">
+          <h3 style="font-size: 16px; font-weight: 700;">💰 Milestone Rewards Tracker</h3>
+          <p style="font-size: 13px; color: var(--text-secondary);">
+            Complete Weekly Goals to earn a <strong>1,000 rs</strong> completion reward. Complete Monthly Mega Projects to secure an extra <strong>1,000 rs</strong> bonus credited to your balance!
+          </p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="milestone-badges-list">
+            <!-- Dynamically populated milestones -->
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 16px; font-weight: 700;">📁 Projects Portfolio</h3>
+          <div style="display: flex; gap: 8px;">
+            <select id="project-filter-type" class="filter-select" onchange="renderProjects()">
+              <option value="">All Types</option>
+              <option value="Weekly">Weekly Projects</option>
+              <option value="Mega">Mega Projects</option>
+            </select>
+            <select id="project-filter-status" class="filter-select" onchange="renderProjects()">
+              <option value="">All Statuses</option>
+              <option value="unsolved">Not Completed</option>
+              <option value="solved">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="projects-grid" id="projects-grid-container">
+          <!-- Dynamically populated project cards -->
+        </div>
+      </section>
+
+      <!-- ================= CHEAT SHEETS VIEW ================= -->
+      <section id="view-cheatsheets" class="view-pane">
+        
+        <div class="qbank-header" style="flex-direction: row; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700;">📄 Personal Data Engineering Cheat Sheets</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+              Maintain your key syntax cheat sheets, design patterns, and study summaries. Save directly back to your database.
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" onclick="saveActiveCheatSheet()">Save Cheat Sheet</button>
+          </div>
+        </div>
+
+        <div class="schedule-layout">
+          <div class="schedule-browser" style="gap: 12px;">
+            <button class="nav-item active" id="cs-tab-python" onclick="switchCheatSheetTab('python_patterns')">🐍 Python Patterns</button>
+            <button class="nav-item" id="cs-tab-sql" onclick="switchCheatSheetTab('sql_patterns')">📊 SQL Optimization Patterns</button>
+            <button class="nav-item" id="cs-tab-pyspark" onclick="switchCheatSheetTab('pyspark_configs')">⚡ PySpark Common Configs</button>
+            <button class="nav-item" id="cs-tab-system" onclick="switchCheatSheetTab('system_design')">🌐 System Design Frameworks</button>
+            <button class="nav-item" id="cs-tab-behavioral" onclick="switchCheatSheetTab('behavioral_stories')">💬 Behavioral Stories (STAR)</button>
+            <button class="nav-item" id="cs-tab-questions" onclick="switchCheatSheetTab('questions_to_ask')">❓ Questions to Ask Interviewers</button>
+          </div>
+
+          <div class="day-details-panel" style="position: static; height: auto; max-height: none;">
+            <div class="workspace-section">
+              <span class="workspace-label" id="cs-editor-title">Python Patterns</span>
+              <p style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px;" id="cs-editor-last-updated">Last Updated: Never</p>
+              <textarea id="cs-editor-textarea" class="textarea-field" style="min-height: 450px; font-family: var(--font-code); font-size: 13px;" placeholder="Write your notes here... support code blocks, markdown text, syntax tables, etc."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SETTINGS VIEW ================= -->
+      <section id="view-settings" class="view-pane">
+        
+        <div class="schedule-layout" style="grid-template-columns: 1fr 1fr;">
+          
+          <!-- User Profile Settings Card -->
+          <div class="schedule-browser">
+            <h3 style="font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">👤 User Profile</h3>
+            
+            <div class="workspace-section">
+              <label class="workspace-label">Full Name</label>
+              <input type="text" id="setting-profile-name" class="input-field" placeholder="Enter your name">
+            </div>
+            
+            <div class="workspace-section">
+              <label class="workspace-label">Email Address</label>
+              <input type="email" id="setting-profile-email" class="input-field" placeholder="Enter your email">
+            </div>
+
+            <div class="workspace-section">
+              <label class="workspace-label">Goal Target</label>
+              <input type="text" id="setting-profile-goal" class="input-field" placeholder="e.g. Data Engineer, Big Data Developer">
+            </div>
+
+            <div class="workspace-section">
+              <label class="workspace-label">Target Companies (Comma separated)</label>
+              <input type="text" id="setting-profile-companies" class="input-field" placeholder="e.g. Meta, Amazon, Netflix">
+            </div>
+
+            <div class="workspace-section">
+              <label class="workspace-label">Daily Study Target (Hours)</label>
+              <input type="number" id="setting-profile-hours" class="input-field" min="1" max="24">
+            </div>
+
+            <div class="workspace-section" style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 8px;">
+              <label class="workspace-label" style="color: var(--accent-indigo);">🤖 Gemini API Key</label>
+              <input type="password" id="setting-gemini-key" class="input-field" placeholder="Paste your Gemini API key here">
+              <span style="font-size: 10px; color: var(--text-tertiary);">Used to power the AI DE Coach, Table Schema generation, and Code Reviews.</span>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveProfileSettings()" style="margin-top: 12px;">Save Profile Settings</button>
+          </div>
+
+          <!-- Data & Gamification Status Card -->
+          <div class="schedule-browser">
+            <h3 style="font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">🏆 Gamification & Achievements</h3>
+            
+            <div class="achievements-grid" id="settings-achievements-container" style="max-height: 250px; overflow-y: auto; padding: 4px;">
+              <!-- Dynamically populated Achievements listing -->
+            </div>
+
+            <h3 style="font-size: 15px; font-weight: 700; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 8px;">⚙️ Sync & Backup Tools</h3>
+            
+            <p style="font-size: 12px; color: var(--text-secondary);">
+              To make sure you never lose your progress, code solutions, levels, and coins, download the backup frequently.
+            </p>
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button class="btn btn-success" onclick="exportDatabaseFile()" style="flex: 1; font-size: 12px; padding: 6px 10px;">📥 Export JSON</button>
+              <button class="btn" onclick="triggerImportInput()" style="flex: 1; font-size: 12px; padding: 6px 10px;">📤 Import JSON</button>
+              <input type="file" id="database-import-file" style="display: none;" onchange="importDatabaseFile(event)">
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 8px;">
+              <h4 style="font-size: 12px; font-weight: 700; color: var(--accent-danger);">Danger Zone</h4>
+              <button class="btn" style="border-color: var(--accent-danger); color: var(--accent-danger); font-size: 11px; padding: 4px 8px; margin-top: 4px;" onclick="resetToBaselineDatabase()">🔥 Reset All Progress</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Question Workspace Modal Overlay (Includes AI Coach tabs) -->
+  <div class="modal-backdrop" id="workspace-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-area">
+          <div class="modal-category-badges">
+            <span class="badge badge-indigo" id="modal-category-badge">SQL</span>
+            <span class="badge badge-warning" id="modal-difficulty-badge">Medium</span>
+            <span style="font-size: 11px; font-weight: 600; color: var(--text-tertiary);" id="modal-topic-label">Topic: SELECT</span>
+          </div>
+          <h2 class="modal-title" id="modal-question-title">Write intermediate Window functions</h2>
+        </div>
+        
+        <!-- Theme toggle and Code toggle inside Header -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <label style="font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; cursor: pointer;" id="matrix-theme-toggle-label">
+            <input type="checkbox" id="modal-theme-matrix-checkbox" onchange="toggleMatrixTheme()"> 🟩 Matrix Mode
+          </label>
+          <button class="modal-close-btn" onclick="closeWorkspaceModal()">&times;</button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs inside Modal -->
+      <div class="modal-nav-tabs">
+        <button class="modal-nav-btn active" id="modal-tab-workspace" onclick="switchModalNav('workspace')">📝 Code Workspace</button>
+        <button class="modal-nav-btn" id="modal-tab-ai" onclick="switchModalNav('ai')">🤖 AI Coach Panel</button>
+      </div>
+
+      <!-- Modal Body (Split Panel) -->
+      <div class="modal-body">
+        
+        <!-- LEFT COLUMN: Question Text & Code Editor -->
+        <div class="modal-column" id="modal-left-column" style="grid-column: span 1;">
+          
+          <div class="workspace-section">
+            <label class="workspace-label">📝 Detailed Question Prompt (Editable)</label>
+            <textarea id="modal-question-description" class="textarea-field" style="min-height: 120px; font-size: 13px;" placeholder="Complete the full details of this question here..."></textarea>
+          </div>
+
+          <div class="workspace-section">
+            <label class="workspace-label" id="modal-editor-label">💻 Solution Code (Monospace)</label>
+            <textarea id="modal-question-code" class="code-editor-textarea" placeholder="-- Write your SQL or PySpark solution code here..."></textarea>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Notes Area or AI Panel (Can toggle view) -->
+        <div class="modal-column" id="modal-right-column">
+          
+          <!-- Standard Workspace Notes View -->
+          <div id="modal-workspace-notes-view" style="display: flex; flex-direction: column; gap: 16px; height: 100%;">
+            <div class="workspace-section" style="flex: 1; display: flex; flex-direction: column;">
+              <label class="workspace-label">💡 Approach / Doubts / Key Notes</label>
+              <textarea id="modal-question-notes" class="textarea-field" style="flex: 1; min-height: 380px; font-size: 13px;" placeholder="Write your problem-solving approaches, doubts, key observations, and references here..."></textarea>
+            </div>
+          </div>
+
+          <!-- AI Coach view -->
+          <div id="modal-ai-coach-view" class="ai-coach-panel" style="display: none;">
+            
+            <div class="ai-coach-tabs">
+              <button class="ai-subtab-btn active" id="ai-tab-schema" onclick="switchAISubTab('schema')">📊 Schema & Context</button>
+              <button class="ai-subtab-btn" id="ai-tab-hint" onclick="switchAISubTab('hint')">💡 Review & Hints</button>
+              <button class="ai-subtab-btn" id="ai-tab-chat" onclick="switchAISubTab('chat')">💬 Doubt Chat</button>
+            </div>
+
+            <!-- Content dynamic window -->
+            <div class="ai-coach-content" id="ai-coach-box">
+              <div style="color: var(--text-tertiary); text-align: center; padding-top: 80px;">
+                🤖 Call your AI DE Coach for database schemas, code hints, or custom explanations
+              </div>
+            </div>
+
+            <!-- Custom Chat input row (Only shown on Chat subtab) -->
+            <div class="ai-coach-input-row" id="ai-chat-input-row" style="display: none;">
+              <input type="text" id="ai-chat-text-input" class="input-field" placeholder="Ask details about joins, logic, or concepts..." onkeydown="if(event.key==='Enter') sendAICustomMessage()">
+              <button class="btn btn-primary" onclick="sendAICustomMessage()" style="padding: 6px 12px; font-size: 12px;">Send</button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label class="workspace-label" style="font-size: 9px;">Status</label>
+            <select id="modal-status-select" class="filter-select" style="min-width: 120px; padding: 4px 8px; font-size: 12px;">
+              <option value="unsolved">Unsolved</option>
+              <option value="inprogress">In Progress</option>
+              <option value="solved">Solved</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label class="workspace-label" style="font-size: 9px;">Confidence Level</label>
+            <div class="stars-selector" id="modal-stars-selector">
+              <button class="star-btn" onclick="setModalConfidence(1)">★</button>
+              <button class="star-btn" onclick="setModalConfidence(2)">★</button>
+              <button class="star-btn" onclick="setModalConfidence(3)">★</button>
+              <button class="star-btn" onclick="setModalConfidence(4)">★</button>
+              <button class="star-btn" onclick="setModalConfidence(5)">★</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" onclick="closeWorkspaceModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveWorkspaceQuestion()">💾 Save & Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    // Application State Variables
+    let db = null;
+    let baselineData = null; // Store loaded baseline configuration
+    
+    // Tab Navigation State
+    let activeView = 'schedule';
+    let currentSelectedMonth = 'Month 1';
+    let currentSelectedWeek = 'Week 1';
+    let currentSelectedDay = 1;
+    
+    // Question Bank Navigation State
+    let activeQBankTab = 'sql';
+    let qbankFilters = {
+      search: '',
+      difficulty: '',
+      status: '',
+      category: ''
+    };
+    let qbankCurrentPage = 1;
+    const qbankPageSize = 10;
+    let filteredQuestionsList = [];
+    
+    // Cheat Sheets Tab State
+    let activeCheatSheetKey = 'python_patterns';
+
+    // Simulated Time
+    let simulatedDate = '';
+
+    // Star ratings helper
+    let modalConfidenceRating = 0;
+    let activeWorkspaceQuestionId = null;
+    let activeWorkspaceCategory = '';
+
+    // V2 Modal Panel Navigation
+    let activeModalView = 'workspace'; // 'workspace' (standard notes) vs 'ai'
+    let activeAISubTab = 'schema'; // 'schema', 'hint', 'chat'
+
+    // Shop Catalog
+    const shopCatalog = [
+      { id: 'streak_freeze', name: 'Streak Freeze', desc: 'Protects your streak once if you miss check-in.', price: 300, icon: '❄️' },
+      { id: 'double_xp', name: 'Double XP Token', desc: 'Doubles XP rewards for the next 2 solved questions.', price: 150, icon: '⚡' },
+      { id: 'golden_owl', name: 'Golden Owl Avatar', desc: 'Cosmetic upgrade showing a golden owl badge next to your profile.', price: 500, icon: '🦉' },
+      { id: 'matrix_theme', name: 'Matrix Monospace Theme', desc: 'Unlock a terminal neon-green style for the code box.', price: 400, icon: '🟩' },
+      { id: 'streak_booster', name: 'Streak Booster', desc: 'Instantly increments your current streak by +1.', price: 200, icon: '🔥' }
+    ];
+
+    // Achievements definition
+    const achievementsList = [
+      { id: 'checkin_first', title: 'First Check-In', desc: 'Log check-in once', icon: '📆', check: (p) => p.last_checkin_date !== null },
+      { id: 'sql_10', title: 'SQL Squire', desc: 'Solve 10 SQL queries', icon: '📊', check: () => db.sql_question_bank.filter(q => q.solved).length >= 10 },
+      { id: 'sql_50', title: 'SQL Knight', desc: 'Solve 50 SQL queries', icon: '⚔️', check: () => db.sql_question_bank.filter(q => q.solved).length >= 50 },
+      { id: 'dsa_10', title: 'DSA Novice', desc: 'Solve 10 DSA problems', icon: '🧩', check: () => db.dsa_problems.filter(q => q.first_solved).length >= 10 },
+      { id: 'spark_10', title: 'Spark Master', desc: 'Solve 10 PySpark questions', icon: '⚡', check: () => db.pyspark_questions.filter(q => q.mastered).length >= 10 },
+      { id: 'earn_rich', title: 'Big Accumulator', desc: 'Reach a lifetime balance of 3000 rs', icon: '💰', check: (p) => p.balance >= 3000 },
+      { id: 'reach_lvl_5', title: 'Study Knight', desc: 'Reach Level 5', icon: '👑', check: (p) => p.level >= 5 },
+      { id: 'coach_client', title: 'Collaborator', desc: 'Call the AI Coach 5 times', icon: '🤖', check: (p) => (p.ai_coach_calls || 0) >= 5 }
+    ];
+
+    // Motivational quotes
+    const motivationalQuotes = [
+      "Let's write some pipelines! 🚀 Spark is waiting.",
+      "Consistency is the key in Data Engineering. Solve a SQL query today! 📊",
+      "Kafka partition mismatch? Take a deep breath and review. ⚡",
+      "Don't worry about memory errors - partition correctly! 💻",
+      "Idempotency makes you sleep peacefully at night. 💤",
+      "A star schema a day keeps the slow dashboard away! ⭐",
+      "Ready to master Airflow DAGs? Let's get tasks running! 🕒"
+    ];
+
+    // On Load Initializer
+    window.addEventListener('DOMContentLoaded', () => {
+      initApp();
+      initConfetti();
+    });
+
+    // App Initialization
+    async function initApp() {
+      try {
+        const response = await fetch('de_master_roadmap_database.json');
+        if (!response.ok) {
+          throw new Error('Failed to load de_master_roadmap_database.json.');
+        }
+        baselineData = await response.json();
+        
+        // Check if database in localStorage exists
+        const localRaw = localStorage.getItem('de_master_roadmap_data');
+        if (localRaw) {
+          db = JSON.parse(localRaw);
+          mergeWithBaseline(baselineData);
+        } else {
+          db = JSON.parse(JSON.stringify(baselineData)); // deep copy
+          initializeCustomProfileAttributes();
+        }
+
+        // Set Simulated Date
+        if (!db.user_profile.simulated_date) {
+          const todayStr = getLocalDateString();
+          db.user_profile.simulated_date = todayStr;
+        }
+        simulatedDate = db.user_profile.simulated_date;
+        document.getElementById('simulated-date-input').value = simulatedDate;
+
+        // Apply any overdue penalty checks
+        enforcePenalties();
+
+        // Check/Generate Daily Quests
+        evaluateDailyQuests();
+
+        // Save State
+        saveToLocalStorage();
+
+        // Render UI
+        setupUI();
+        
+      } catch (error) {
+        console.error('App initialization error:', error);
+        alert('Could not load data. Ensure de_master_roadmap_database.json is in the same folder as index.html.');
+      }
+    }
+
+    // Merge baseline json with user progress data in localStorage
+    function mergeWithBaseline(baseline) {
+      db.meta = baseline.meta;
+
+      // Ensure v2 profile keys
+      if (db.user_profile.balance === undefined) db.user_profile.balance = 0;
+      if (db.user_profile.streak_days === undefined) db.user_profile.streak_days = 0;
+      if (db.user_profile.last_checkin_date === undefined) db.user_profile.last_checkin_date = null;
+      if (db.user_profile.xp === undefined) db.user_profile.xp = 0;
+      if (db.user_profile.level === undefined) db.user_profile.level = 1;
+      if (db.user_profile.streak_freezes_owned === undefined) db.user_profile.streak_freezes_owned = 0;
+      if (db.user_profile.double_xp_active_count === undefined) db.user_profile.double_xp_active_count = 0;
+      if (db.user_profile.avatar_golden_owl === undefined) db.user_profile.avatar_golden_owl = false;
+      if (db.user_profile.theme_matrix_editor === undefined) db.user_profile.theme_matrix_editor = false;
+      if (db.user_profile.ai_coach_calls === undefined) db.user_profile.ai_coach_calls = 0;
+      if (db.user_profile.gemini_api_key === undefined) db.user_profile.gemini_api_key = "";
+      if (db.user_profile.daily_quests === undefined) db.user_profile.daily_quests = [];
+      if (db.user_profile.last_quest_date === undefined) db.user_profile.last_quest_date = null;
+
+      // Merge Calendar
+      baseline.calendar.forEach(baseDay => {
+        let localDay = db.calendar.find(d => d.day_number === baseDay.day_number);
+        if (localDay) {
+          localDay.focus_area = baseDay.focus_area;
+          localDay.morning_task = baseDay.morning_task;
+          localDay.afternoon_task = baseDay.afternoon_task;
+          localDay.evening_task = baseDay.evening_task;
+          localDay.daily_deliverable = baseDay.daily_deliverable;
+          localDay.milestone = baseDay.milestone;
+          localDay.month = baseDay.month;
+          localDay.week = baseDay.week;
+          localDay.date = baseDay.date;
+        } else {
+          db.calendar.push(JSON.parse(JSON.stringify(baseDay)));
+        }
+      });
+
+      // Merge banks
+      const listKeys = ['sql_question_bank', 'dsa_problems', 'pyspark_questions', 'de_concepts', 'projects', 'interview_prep', 'milestones', 'target_companies'];
+      listKeys.forEach(key => {
+        if (!db[key]) {
+          db[key] = JSON.parse(JSON.stringify(baseline[key]));
+          return;
+        }
+        
+        baseline[key].forEach(baseItem => {
+          let localItem = null;
+          if (key === 'projects') {
+            localItem = db.projects.find(item => item.name === baseItem.name && item.week === baseItem.week);
+          } else if (key === 'milestones') {
+            localItem = db.milestones.find(item => item.name === baseItem.name);
+          } else if (key === 'target_companies') {
+            localItem = db.target_companies.find(item => item.name === baseItem.name);
+          } else {
+            localItem = db[key].find(item => item.id === baseItem.id);
+          }
+
+          if (localItem) {
+            if (key === 'sql_question_bank' || key === 'dsa_problems' || key === 'pyspark_questions' || key === 'de_concepts' || key === 'interview_prep') {
+              localItem.question = baseItem.question || localItem.question;
+              localItem.category = baseItem.category || localItem.category;
+              localItem.difficulty = baseItem.difficulty || localItem.difficulty;
+              localItem.topic = baseItem.topic || localItem.topic;
+              if (baseItem.leetcode_link) localItem.leetcode_link = baseItem.leetcode_link;
+              if (baseItem.answer_key_points) localItem.answer_key_points = baseItem.answer_key_points;
+              if (baseItem.preparation_tips) localItem.preparation_tips = baseItem.preparation_tips;
+            } else if (key === 'projects') {
+              localItem.technologies = baseItem.technologies;
+              localItem.key_skills = baseItem.key_skills;
+              localItem.deliverables = baseItem.deliverables;
+              localItem.due_by = baseItem.due_by;
+            }
+          } else {
+            db[key].push(JSON.parse(JSON.stringify(baseItem)));
+          }
+        });
+      });
+
+      // Merge Cheat Sheets
+      if (!db.cheat_sheets) {
+        db.cheat_sheets = baseline.cheat_sheets;
+      } else {
+        Object.keys(baseline.cheat_sheets).forEach(k => {
+          if (!db.cheat_sheets[k]) {
+            db.cheat_sheets[k] = baseline.cheat_sheets[k];
+          }
+        });
+      }
+    }
+
+    // Initialize custom user profile attributes for the tracking engine
+    function initializeCustomProfileAttributes() {
+      db.user_profile.balance = 0;
+      db.user_profile.streak_days = 0;
+      db.user_profile.last_checkin_date = null;
+      db.user_profile.weekly_rewards_claimed = {};
+      
+      // V2 Attributes
+      db.user_profile.xp = 0;
+      db.user_profile.level = 1;
+      db.user_profile.streak_freezes_owned = 0;
+      db.user_profile.double_xp_active_count = 0;
+      db.user_profile.avatar_golden_owl = false;
+      db.user_profile.theme_matrix_editor = false;
+      db.user_profile.ai_coach_calls = 0;
+      db.user_profile.gemini_api_key = "";
+      db.user_profile.daily_quests = [];
+      db.user_profile.last_quest_date = null;
+      db.user_profile.simulated_date = getLocalDateString();
+    }
+
+    // Save current DB state to localStorage
+    function saveToLocalStorage() {
+      localStorage.setItem('de_master_roadmap_data', JSON.stringify(db));
+    }
+
+    // Enforce Penalization of past days (incorporates streak freezes)
+    function enforcePenalties() {
+      let penalizeCount = 0;
+      const today = new Date(simulatedDate);
+
+      db.calendar.forEach(day => {
+        const dayDateStr = day.date;
+        if (dayDateStr) {
+          const dayDate = new Date(dayDateStr);
+          if (dayDate < today && !day.completed && !day.penalized) {
+            day.penalized = true;
+            db.user_profile.balance = Math.max(0, db.user_profile.balance - 50);
+            penalizeCount++;
+          }
+        }
+      });
+
+      // If any days were penalized, check streak freeze shield
+      if (penalizeCount > 0) {
+        if (db.user_profile.streak_freezes_owned > 0) {
+          db.user_profile.streak_freezes_owned--;
+          showNotification("❄️ Streak Freeze Used! Your daily streak was shielded from breaking.", "warning");
+        } else {
+          db.user_profile.current_streak = 0;
+          showNotification("⚠️ Streak Reset! Some tasks were missed and you were penalized.", "danger");
+        }
+      }
+    }
+
+    // Setup and render components
+    function setupUI() {
+      renderUserProfileWidget();
+      renderOverallStatistics();
+      renderMotivationalBuddy();
+      renderMonthTabs();
+      renderWeekTabs();
+      renderDaysList();
+      renderQBankCategories();
+      applyQBankFilters();
+      renderProjects();
+      renderCheatSheetContent();
+      renderMilestoneBadges();
+      populateSettingsForm();
+      renderQuestsList();
+      renderShopItems();
+      renderAchievementsList();
+    }
+
+    // Header Widgets Render
+    function renderUserProfileWidget() {
+      // Golden Owl badge next to name
+      const owlBadge = db.user_profile.avatar_golden_owl ? " 🦉🎖️" : "";
+      document.querySelector('.brand-title').innerHTML = `<span>💻</span> DE Mastery${owlBadge}`;
+
+      document.getElementById('widget-balance').innerText = `💰 ${db.user_profile.balance} rs`;
+      document.getElementById('widget-streak').innerText = `🔥 ${db.user_profile.current_streak} Days`;
+      
+      // Calculate current week progress
+      const weekDays = db.calendar.filter(d => d.week === currentSelectedWeek);
+      const completedWeekDays = weekDays.filter(d => d.completed).length;
+      document.getElementById('widget-week-progress').innerText = `${completedWeekDays}/7 Days`;
+
+      // Claim Daily Check-in state
+      const checkinBtn = document.getElementById('btn-daily-checkin');
+      if (db.user_profile.claimed_checkin_dates && db.user_profile.claimed_checkin_dates.includes(simulatedDate)) {
+        checkinBtn.innerText = '✅ Checked-In Today';
+        checkinBtn.disabled = true;
+        checkinBtn.style.opacity = '0.6';
+      } else {
+        checkinBtn.innerText = '📆 Daily Check-In (+10rs)';
+        checkinBtn.disabled = false;
+        checkinBtn.style.opacity = '1';
+      }
+
+      // Level progress details
+      const lvl = db.user_profile.level || 1;
+      const xp = db.user_profile.xp || 0;
+      const targetXP = lvl * 200;
+      const pct = Math.min(100, Math.round((xp / targetXP) * 100));
+
+      document.getElementById('hud-level-label').innerText = `Lvl ${lvl}`;
+      document.getElementById('hud-xp-bar').style.width = `${pct}%`;
+      document.getElementById('hud-xp-label').innerText = `${xp} / ${targetXP} XP`;
+    }
+
+    // Overall Progress Statistics Rendering
+    function renderOverallStatistics() {
+      const totalDays = db.calendar.length;
+      const completedDays = db.calendar.filter(d => d.completed).length;
+      const progressPct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
+
+      document.getElementById('stat-overall-pct').innerText = `${progressPct}%`;
+      document.getElementById('stat-overall-fill').style.width = `${progressPct}%`;
+
+      // SQL Stats
+      const totalSQL = db.sql_question_bank.length;
+      const solvedSQL = db.sql_question_bank.filter(q => q.solved).length;
+      document.getElementById('stat-sql-solved').innerText = `${solvedSQL}/${totalSQL}`;
+      document.getElementById('stat-sql-fill').style.width = `${(solvedSQL/totalSQL)*100}%`;
+
+      // DSA Stats
+      const totalDSA = db.dsa_problems.length;
+      const solvedDSA = db.dsa_problems.filter(q => q.first_solved || q.second_solved || q.third_solved).length;
+      document.getElementById('stat-dsa-solved').innerText = `${solvedDSA}/${totalDSA}`;
+      document.getElementById('stat-dsa-fill').style.width = `${(solvedDSA/totalDSA)*100}%`;
+
+      // PySpark + DE Concepts combined as "DE & Spark Mastery"
+      const totalSpark = db.pyspark_questions.length;
+      const solvedSpark = db.pyspark_questions.filter(q => q.mastered).length;
+      const totalDE = db.de_concepts.length;
+      const solvedDE = db.de_concepts.filter(q => q.mastered).length;
+      
+      const totalDECombined = totalSpark + totalDE;
+      const solvedDECombined = solvedSpark + solvedDE;
+      document.getElementById('stat-pyspark-solved').innerText = `${solvedDECombined}/${totalDECombined}`;
+      document.getElementById('stat-pyspark-fill').style.width = `${(solvedDECombined/totalDECombined)*100}%`;
+    }
+
+    // View Switching
+    function switchView(viewName) {
+      activeView = viewName;
+      document.querySelectorAll('.view-pane').forEach(pane => pane.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      
+      const targetPane = document.getElementById(`view-${viewName}`);
+      if (targetPane) targetPane.classList.add('active');
+      
+      // Update sidebar nav states
+      const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(btn => btn.innerText.toLowerCase().includes(viewName === 'shop' ? 'shop' : viewName));
+      if (navBtn) navBtn.classList.add('active');
+      
+      const titleElem = document.getElementById('view-title');
+      if (viewName === 'schedule') {
+        titleElem.innerText = 'Roadmap Schedule';
+        renderQuestsList();
+      } else if (viewName === 'qbank') {
+        titleElem.innerText = 'Question & Problem Banks';
+        applyQBankFilters();
+      } else if (viewName === 'shop') {
+        titleElem.innerText = 'Power-Up Rewards Shop';
+        renderShopItems();
+      } else if (viewName === 'projects') {
+        titleElem.innerText = 'Projects & Milestone Rewards';
+        renderProjects();
+      } else if (viewName === 'cheatsheets') {
+        titleElem.innerText = 'Personal DE Cheat Sheets';
+        renderCheatSheetContent();
+      } else if (viewName === 'settings') {
+        titleElem.innerText = 'Settings & Sync';
+        populateSettingsForm();
+        renderAchievementsList();
+      }
+    }
+
+    // Motivation Buddy quote picker
+    function renderMotivationalBuddy() {
+      const idx = Math.floor(Math.random() * motivationalQuotes.length);
+      document.getElementById('buddy-quote').innerText = `"${motivationalQuotes[idx]}"`;
+      
+      const avatars = ['🦉', '🦖', '🤖', '🦊', '🦁'];
+      document.getElementById('buddy-avatar').innerText = avatars[Math.floor(Math.random() * avatars.length)];
+    }
+
+    // Claim Daily Checkin
+    function claimDailyCheckin() {
+      if (!db.user_profile.claimed_checkin_dates) db.user_profile.claimed_checkin_dates = [];
+      if (db.user_profile.claimed_checkin_dates.includes(simulatedDate)) return;
+
+      db.user_profile.balance += 10;
+
+      // Manage Streak
+      const lastCheckin = db.user_profile.last_checkin_date;
+      const today = new Date(simulatedDate);
+      
+      if (lastCheckin) {
+        const lastCheckinDate = new Date(lastCheckin);
+        const diffTime = Math.abs(today - lastCheckinDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          db.user_profile.current_streak += 1;
+        } else if (diffDays > 1) {
+          db.user_profile.current_streak = 1;
+        }
+      } else {
+        db.user_profile.current_streak = 1;
+      }
+
+      if (db.user_profile.current_streak > db.user_profile.best_streak) {
+        db.user_profile.best_streak = db.user_profile.current_streak;
+      }
+
+      db.user_profile.last_checkin_date = simulatedDate;
+      db.user_profile.claimed_checkin_dates.push(simulatedDate);
+      
+      // Earn XP for checkin
+      addXP(50);
+
+      // Evaluate check-in quest
+      updateQuestProgress('checkin', 1);
+
+      saveToLocalStorage();
+      renderUserProfileWidget();
+
+      triggerMilestoneConfetti();
+      showNotification("💰 Check-In claimed! +10 rs and +50 XP added.", "success");
+    }
+
+    // Handle changing simulated date
+    function handleSimulatedDateChange() {
+      const newDateVal = document.getElementById('simulated-date-input').value;
+      if (!newDateVal) return;
+      
+      simulatedDate = newDateVal;
+      db.user_profile.simulated_date = simulatedDate;
+
+      // Re-evaluate penalties when simulated date moves forward!
+      enforcePenalties();
+      
+      // Generate new daily quests for the new simulated day
+      evaluateDailyQuests();
+
+      saveToLocalStorage();
+      renderUserProfileWidget();
+      renderDaysList();
+      renderOverallStatistics();
+      renderQuestsList();
+    }
+
+    // XP & Leveling Engine
+    function addXP(amount) {
+      if (db.user_profile.xp === undefined) db.user_profile.xp = 0;
+      if (db.user_profile.level === undefined) db.user_profile.level = 1;
+
+      // Check for Double XP Token boost active
+      if (db.user_profile.double_xp_active_count > 0) {
+        amount *= 2;
+        db.user_profile.double_xp_active_count--;
+        showNotification("⚡ Double XP Active! Boost applied.", "success");
+      }
+
+      db.user_profile.xp += amount;
+      let xpNeeded = db.user_profile.level * 200;
+      let leveledUp = false;
+
+      while (db.user_profile.xp >= xpNeeded) {
+        db.user_profile.xp -= xpNeeded;
+        db.user_profile.level += 1;
+        xpNeeded = db.user_profile.level * 200;
+        leveledUp = true;
+        
+        // Level up reward!
+        db.user_profile.balance += 200;
+      }
+
+      if (leveledUp) {
+        triggerLevelUpOverlay();
+      }
+
+      // Check achievements on leveling / XP changes
+      evaluateAchievements();
+    }
+
+    function deductXP(amount) {
+      if (db.user_profile.xp === undefined) db.user_profile.xp = 0;
+      if (db.user_profile.level === undefined) db.user_profile.level = 1;
+
+      db.user_profile.xp -= amount;
+
+      // Symmetrical leveling down logic
+      while (db.user_profile.xp < 0 && db.user_profile.level > 1) {
+        db.user_profile.level -= 1;
+        let prevTargetXP = db.user_profile.level * 200;
+        db.user_profile.xp += prevTargetXP;
+
+        // Deduct Level Up reward
+        db.user_profile.balance = Math.max(0, db.user_profile.balance - 200);
+      }
+
+      if (db.user_profile.xp < 0) {
+        db.user_profile.xp = 0;
+      }
+
+      saveToLocalStorage();
+      renderUserProfileWidget();
+    }
+
+    function triggerLevelUpOverlay() {
+      document.getElementById('levelup-text').innerText = `You reached Level ${db.user_profile.level}`;
+      document.getElementById('levelup-overlay').classList.add('active');
+      triggerMilestoneConfetti();
+    }
+
+    function closeLevelupOverlay() {
+      document.getElementById('levelup-overlay').classList.remove('active');
+      renderUserProfileWidget();
+    }
+
+    // ================= QUESTS SYSTEM =================
+
+    function evaluateDailyQuests() {
+      if (db.user_profile.last_quest_date !== simulatedDate) {
+        // Generate new set of quests
+        db.user_profile.daily_quests = [
+          { type: 'sql', title: 'Query Wizard', desc: 'Solve 1 SQL query bank question', target: 1, current: 0, completed: false, reward_rs: 50, reward_xp: 100 },
+          { type: 'dsa', title: 'Algorithmic Spark', desc: 'Solve 1 DSA coding question', target: 1, current: 0, completed: false, reward_rs: 50, reward_xp: 100 },
+          { type: 'study', title: 'Grounded Scholar', desc: 'Log at least 30 study minutes on calendar', target: 30, current: 0, completed: false, reward_rs: 50, reward_xp: 100 },
+          { type: 'checkin', title: 'Daily Consistency', desc: 'Perform your Daily Check-in', target: 1, current: 0, completed: false, reward_rs: 30, reward_xp: 50 }
+        ];
+        db.user_profile.last_quest_date = simulatedDate;
+      }
+    }
+
+    function updateQuestProgress(type, amount) {
+      if (!db.user_profile.daily_quests) return;
+      
+      db.user_profile.daily_quests.forEach(quest => {
+        if (quest.type === type && !quest.completed) {
+          if (type === 'study') {
+            quest.current = amount; // Set direct value for minutes
+          } else {
+            quest.current += amount; // Increment counts
+          }
+
+          if (quest.current >= quest.target) {
+            quest.completed = true;
+            quest.current = quest.target;
+            
+            // Credit rewards
+            db.user_profile.balance += quest.reward_rs;
+            addXP(quest.reward_xp);
+
+            showNotification(`🏆 Quest Completed: ${quest.title}! +${quest.reward_rs} rs, +${quest.reward_xp} XP.`, "success");
+            triggerMilestoneConfetti();
+          }
+        }
+      });
+      saveToLocalStorage();
+      renderQuestsList();
+      renderUserProfileWidget();
+    }
+
+    function renderQuestsList() {
+      const container = document.getElementById('daily-quests-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (!db.user_profile.daily_quests || db.user_profile.daily_quests.length === 0) {
+        container.innerHTML = '<span style="font-size: 11px; color: var(--text-tertiary);">No quests available today.</span>';
+        return;
+      }
+
+      db.user_profile.daily_quests.forEach(q => {
+        const row = document.createElement('div');
+        row.className = 'quest-row';
+        row.innerHTML = `
+          <div class="quest-details">
+            <span class="quest-title">${q.completed ? '✅' : '⏳'} ${q.title}</span>
+            <span style="font-size: 11px; color: var(--text-secondary);">${q.desc}</span>
+            <div class="quest-rewards">
+              <span>💎 +${q.reward_xp} XP</span>
+              <span>💰 +${q.reward_rs} RS</span>
+            </div>
+          </div>
+          <div style="font-weight: 700; color: var(--accent-indigo);">
+            ${q.current} / ${q.target}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // ================= REWARDS SHOP LOGIC =================
+
+    function renderShopItems() {
+      const container = document.getElementById('shop-grid-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      // Update Inventory label
+      const invLabel = document.getElementById('shop-inventory-label');
+      if (invLabel) {
+        invLabel.innerHTML = `
+          Owned inventory: ❄️ Streak Freezes: <strong>${db.user_profile.streak_freezes_owned || 0}</strong> | 
+          ⚡ XP Boosts: <strong>${db.user_profile.double_xp_active_count || 0}</strong> | 
+          🦉 Golden Owl: <strong>${db.user_profile.avatar_golden_owl ? 'Unlocked' : 'Locked'}</strong> | 
+          🟩 Matrix Theme: <strong>${db.user_profile.theme_matrix_editor ? 'Unlocked' : 'Locked'}</strong>
+        `;
+      }
+
+      shopCatalog.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'shop-card';
+        
+        let buttonHTML = '';
+        const isOwnedCosmetic = (item.id === 'golden_owl' && db.user_profile.avatar_golden_owl) || 
+                                (item.id === 'matrix_theme' && db.user_profile.theme_matrix_editor);
+        
+        if (isOwnedCosmetic) {
+          buttonHTML = `<button class="btn" disabled style="opacity: 0.5;">Purchased</button>`;
+        } else {
+          const canBuy = db.user_profile.balance >= item.price;
+          buttonHTML = `<button class="btn btn-primary" onclick="buyShopItem('${item.id}')" ${canBuy ? '' : 'disabled style="opacity: 0.5;"'}>Buy Now</button>`;
+        }
+
+        card.innerHTML = `
+          <div>
+            <div class="shop-title-row">
+              <span class="shop-icon">${item.icon}</span>
+              <span class="shop-name">${item.name}</span>
+            </div>
+            <p class="shop-desc" style="margin-top: 8px;">${item.desc}</p>
+          </div>
+          <div class="shop-footer">
+            <span class="shop-price">💰 ${item.price} rs</span>
+            ${buttonHTML}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function buyShopItem(itemId) {
+      const item = shopCatalog.find(i => i.id === itemId);
+      if (!item) return;
+
+      if (db.user_profile.balance < item.price) {
+        alert("Insufficient funds!");
+        return;
+      }
+
+      db.user_profile.balance -= item.price;
+
+      // Handle item delivery
+      if (itemId === 'streak_freeze') {
+        db.user_profile.streak_freezes_owned = (db.user_profile.streak_freezes_owned || 0) + 1;
+        showNotification("❄️ Purchased Streak Freeze! Added to inventory.", "success");
+      } else if (itemId === 'double_xp') {
+        db.user_profile.double_xp_active_count = (db.user_profile.double_xp_active_count || 0) + 2;
+        showNotification("⚡ Purchased Double XP Token! Next 2 questions will grant double XP.", "success");
+      } else if (itemId === 'golden_owl') {
+        db.user_profile.avatar_golden_owl = true;
+        showNotification("🦉 Unlocked Golden Owl Avatar! Display badge updated.", "success");
+      } else if (itemId === 'matrix_theme') {
+        db.user_profile.theme_matrix_editor = true;
+        showNotification("🟩 Unlocked Matrix Editor Theme! matrix mode checkbox is now available.", "success");
+      } else if (itemId === 'streak_booster') {
+        db.user_profile.current_streak = (db.user_profile.current_streak || 0) + 1;
+        if (db.user_profile.current_streak > db.user_profile.best_streak) {
+          db.user_profile.best_streak = db.user_profile.current_streak;
+        }
+        showNotification("🔥 Streak Boosted! +1 day added to current streak.", "success");
+      }
+
+      saveToLocalStorage();
+      renderUserProfileWidget();
+      renderShopItems();
+      
+      // Update achievements on shop purchase
+      evaluateAchievements();
+    }
+
+    // ================= ACHIEVEMENTS LOGIC =================
+
+    function evaluateAchievements() {
+      let unlockedNew = false;
+      achievementsList.forEach(a => {
+        if (!db.user_profile.unlocked_achievements) db.user_profile.unlocked_achievements = {};
+        
+        if (!db.user_profile.unlocked_achievements[a.id]) {
+          if (a.check(db.user_profile)) {
+            db.user_profile.unlocked_achievements[a.id] = true;
+            unlockedNew = true;
+            
+            // Earn bonus coins and XP on achievements unlock!
+            db.user_profile.balance += 200;
+            addXP(200);
+
+            showNotification(`🏆 Achievement Unlocked: ${a.title}! +200 rs, +200 XP!`, "success");
+          }
+        }
+      });
+
+      if (unlockedNew) {
+        saveToLocalStorage();
+        renderUserProfileWidget();
+        renderAchievementsList();
+        triggerMilestoneConfetti();
+      }
+    }
+
+    function renderAchievementsList() {
+      const container = document.getElementById('settings-achievements-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      achievementsList.forEach(a => {
+        const unlocked = db.user_profile.unlocked_achievements && db.user_profile.unlocked_achievements[a.id];
+        
+        const card = document.createElement('div');
+        card.className = `achievement-card ${unlocked ? '' : 'locked'}`;
+        card.innerHTML = `
+          <span class="achievement-icon">${unlocked ? a.icon : '🔒'}</span>
+          <div class="achievement-info">
+            <span class="achievement-title">${a.title}</span>
+            <span class="achievement-desc">${a.desc}</span>
+            ${unlocked ? '<span style="font-size: 9px; font-weight:700; color: var(--accent-success-hover);">Earned +200rs / +200XP</span>' : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // ================= MONTH/WEEK/DAYS RENDER =================
+
+    // Render Month tab bars
+    function renderMonthTabs() {
+      const months = [...new Set(db.calendar.map(d => d.month))];
+      const container = document.getElementById('month-tabs-container');
+      container.innerHTML = '';
+
+      months.forEach(monthName => {
+        const btn = document.createElement('button');
+        btn.className = `month-tab-btn ${currentSelectedMonth === monthName ? 'active' : ''}`;
+        btn.innerText = monthName;
+        btn.onclick = () => selectMonth(monthName);
+        container.appendChild(btn);
+      });
+    }
+
+    // Render Week tabs grid
+    function renderWeekTabs() {
+      const daysInMonth = db.calendar.filter(d => d.month === currentSelectedMonth);
+      const weeks = [...new Set(daysInMonth.map(d => d.week))];
+      const container = document.getElementById('week-tabs-container');
+      container.innerHTML = '';
+
+      weeks.forEach(weekName => {
+        const btn = document.createElement('button');
+        const weekDays = db.calendar.filter(d => d.week === weekName);
+        const completedDays = weekDays.filter(d => d.completed).length;
+        
+        let activeClass = currentSelectedWeek === weekName ? 'active' : '';
+        let completedClass = completedDays === 7 ? 'completed' : '';
+        
+        btn.className = `week-btn ${activeClass} ${completedClass}`;
+        btn.innerText = weekName;
+        btn.onclick = () => selectWeek(weekName);
+        container.appendChild(btn);
+      });
+    }
+
+    // Render 7 days belonging to active week
+    function renderDaysList() {
+      const container = document.getElementById('days-list-container');
+      container.innerHTML = '';
+      
+      const days = db.calendar.filter(d => d.week === currentSelectedWeek);
+      
+      days.forEach(day => {
+        const card = document.createElement('div');
+        
+        let statusBadge = '';
+        let statusEmoji = '⚪';
+        if (day.completed) {
+          statusBadge = '<span class="badge badge-success">Completed</span>';
+          statusEmoji = '✅';
+        } else if (day.penalized) {
+          statusBadge = '<span class="badge badge-danger">Penalized (-50rs)</span>';
+          statusEmoji = '❌';
+        } else if (day.morning_completed || day.afternoon_completed || day.evening_completed) {
+          statusBadge = '<span class="badge badge-warning">In Progress</span>';
+          statusEmoji = '⏳';
+        } else {
+          statusBadge = '<span class="badge badge-gray">Not Started</span>';
+        }
+
+        let activeClass = currentSelectedDay === day.day_number ? 'active' : '';
+        
+        card.className = `day-row-card ${activeClass}`;
+        card.innerHTML = `
+          <div class="day-meta">
+            <span class="day-title">Day ${day.day_number} (${day.day_number % 7 === 0 ? 'Sunday - Review' : day.day_number % 7 === 4 ? 'Wednesday - Revision' : 'Study Day'})</span>
+            <span class="day-focus-label">🎯 ${day.focus_area}</span>
+            <div class="day-badge-row">
+              ${statusBadge}
+              <span style="font-size: 11px; color: var(--text-tertiary);">📅 ${day.date}</span>
+            </div>
+          </div>
+          <div class="day-status-indicator">${statusEmoji}</div>
+        `;
+        
+        card.onclick = () => selectDay(day.day_number);
+        container.appendChild(card);
+      });
+
+      renderDayDetailsPanel();
+    }
+
+    function selectMonth(monthName) {
+      currentSelectedMonth = monthName;
+      const daysInMonth = db.calendar.filter(d => d.month === monthName);
+      const firstWeek = daysInMonth[0].week;
+      selectWeek(firstWeek);
+      renderMonthTabs();
+    }
+
+    function selectWeek(weekName) {
+      currentSelectedWeek = weekName;
+      const daysInWeek = db.calendar.filter(d => d.week === weekName);
+      selectDay(daysInWeek[0].day_number);
+      renderWeekTabs();
+    }
+
+    function selectDay(dayNum) {
+      currentSelectedDay = dayNum;
+      
+      const dayObj = db.calendar.find(d => d.day_number === dayNum);
+      if (dayObj) {
+        currentSelectedWeek = dayObj.week;
+        currentSelectedMonth = dayObj.month;
+      }
+      
+      document.querySelectorAll('.day-row-card').forEach((card, idx) => {
+        const days = db.calendar.filter(d => d.week === currentSelectedWeek);
+        if (days[idx] && days[idx].day_number === dayNum) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+
+      renderDayDetailsPanel();
+    }
+
+    // Render detailed sidebar sheet for active selected day
+    function renderDayDetailsPanel() {
+      const panel = document.getElementById('day-details-panel');
+      const day = db.calendar.find(d => d.day_number === currentSelectedDay);
+      if (!day) return;
+
+      const dsaMatches = matchDSAMatchingQuestions(day.evening_task);
+      const sqlMatches = matchSQLMatchingQuestions(day.afternoon_task, day.morning_task);
+      const deMatches = matchDEConceptsMatchingQuestions(day.morning_task);
+
+      let matchingQHTML = '';
+      if (dsaMatches.length > 0 || sqlMatches.length > 0 || deMatches.length > 0) {
+        matchingQHTML += `<div class="panel-section-title">📂 Linked Workspace Questions</div><div class="matching-questions-list">`;
+        
+        sqlMatches.forEach(q => {
+          matchingQHTML += `
+            <div class="matching-q-card" onclick="openWorkspaceModal(${q.id}, 'sql')">
+              <div>
+                <div class="matching-q-title">${q.question.slice(0, 45)}...</div>
+                <div class="matching-q-meta">📊 SQL | ${q.category} | ${q.solved ? '✅ Solved' : '⏳ Practice'}</div>
+              </div>
+              <span class="matching-q-chevron">›</span>
+            </div>
+          `;
+        });
+
+        dsaMatches.forEach(q => {
+          matchingQHTML += `
+            <div class="matching-q-card" onclick="openWorkspaceModal(${q.id}, 'dsa')">
+              <div>
+                <div class="matching-q-title">${q.title}</div>
+                <div class="matching-q-meta">🧩 DSA | ${q.pattern} | ${q.first_solved ? '✅ Solved' : '⏳ Practice'}</div>
+              </div>
+              <span class="matching-q-chevron">›</span>
+            </div>
+          `;
+        });
+
+        deMatches.forEach(q => {
+          matchingQHTML += `
+            <div class="matching-q-card" onclick="openWorkspaceModal(${q.id}, 'concepts')">
+              <div>
+                <div class="matching-q-title">${q.question.slice(0, 45)}...</div>
+                <div class="matching-q-meta">🧠 Concepts | ${q.category} | ${q.mastered ? '✅ Mastered' : '⏳ Review'}</div>
+              </div>
+              <span class="matching-q-chevron">›</span>
+            </div>
+          `;
+        });
+
+        matchingQHTML += `</div>`;
+      }
+
+      panel.innerHTML = `
+        <h3 style="font-size: 16px; font-weight: 800;">Day ${day.day_number}</h3>
+        <p style="font-size: 13px; color: var(--accent-indigo); font-weight: 700;">🎯 Focus: ${day.focus_area}</p>
+        
+        <div style="background-color: var(--bg-app); border-radius: 8px; padding: 10px 12px; font-size: 12px; border: 1px solid var(--border-color);">
+          <strong>Deliverable Target:</strong> ${day.daily_deliverable}
+        </div>
+
+        <div class="panel-section-title">📝 Task Checklist</div>
+        <div class="task-checkbox-list">
+          
+          <div class="task-item-card">
+            <div class="task-header">
+              <span style="font-size: 14px;">🌅</span>
+              <span>Morning Focus</span>
+            </div>
+            <div class="task-desc">${day.morning_task}</div>
+            <div class="task-actions">
+              <button class="btn-status-toggle ${day.morning_completed ? 'active-completed' : ''}" onclick="toggleDayTask('morning')">
+                ${day.morning_completed ? '✅ Done' : 'Mark Done'}
+              </button>
+            </div>
+          </div>
+
+          <div class="task-item-card">
+            <div class="task-header">
+              <span style="font-size: 14px;">☀️</span>
+              <span>Afternoon Focus</span>
+            </div>
+            <div class="task-desc">${day.afternoon_task}</div>
+            <div class="task-actions">
+              <button class="btn-status-toggle ${day.afternoon_completed ? 'active-completed' : ''}" onclick="toggleDayTask('afternoon')">
+                ${day.afternoon_completed ? '✅ Done' : 'Mark Done'}
+              </button>
+            </div>
+          </div>
+
+          <div class="task-item-card">
+            <div class="task-header">
+              <span style="font-size: 14px;">🌇</span>
+              <span>Evening Focus</span>
+            </div>
+            <div class="task-desc">${day.evening_task}</div>
+            <div class="task-actions">
+              <button class="btn-status-toggle ${day.evening_completed ? 'active-completed' : ''}" onclick="toggleDayTask('evening')">
+                ${day.evening_completed ? '✅ Done' : 'Mark Done'}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        ${matchingQHTML}
+
+        <div class="panel-section-title">⏱️ Time Logging & Rating</div>
+        <div style="display: flex; gap: 12px;">
+          <div style="flex: 1;">
+            <label style="font-size: 10px; font-weight: 700; color: var(--text-secondary);">Minutes Spent</label>
+            <input type="number" class="input-field" style="padding: 6px 10px;" value="${day.time_spent_minutes || 0}" onchange="saveDayDetails('time', this.value)">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 10px; font-weight: 700; color: var(--text-secondary);">Day Rating (1-5)</label>
+            <input type="number" class="input-field" style="padding: 6px 10px;" min="1" max="5" value="${day.rating || ''}" placeholder="e.g. 5" onchange="saveDayDetails('rating', this.value)">
+          </div>
+        </div>
+
+        <div class="panel-section-title">✍️ Daily Notes & Approaches</div>
+        <textarea class="textarea-field" style="min-height: 80px;" placeholder="Save daily achievements, doubts, approaches..." onchange="saveDayDetails('notes', this.value)">${day.notes || ''}</textarea>
+      `;
+    }
+
+    function toggleDayTask(timeOfDay) {
+      const day = db.calendar.find(d => d.day_number === currentSelectedDay);
+      if (!day) return;
+
+      const fieldName = `${timeOfDay}_completed`;
+      day[fieldName] = !day[fieldName];
+
+      const wasCompleted = day.completed;
+      const isCompletedNow = day.morning_completed && day.afternoon_completed && day.evening_completed;
+
+      if (isCompletedNow && !wasCompleted) {
+        day.completed = true;
+        day.penalized = false;
+        
+        db.user_profile.balance += 100;
+        
+        // Earn XP on daily completion
+        addXP(100);
+
+        renderMotivationalBuddy();
+        evaluateWeeklyMilestoneReward(day.week);
+        
+        triggerMilestoneConfetti();
+        showNotification("🎉 Day Completed! +100 rs and +100 XP credited.", "success");
+      } else if (!isCompletedNow && wasCompleted) {
+        day.completed = false;
+        db.user_profile.balance = Math.max(0, db.user_profile.balance - 100);
+        deductXP(100);
+        reverseWeeklyMilestoneReward(day.week);
+      }
+
+      // Quest evaluator
+      evaluateAchievements();
+      saveToLocalStorage();
+      renderUserProfileWidget();
+      renderDaysList();
+      renderOverallStatistics();
+    }
+
+    function saveDayDetails(field, value) {
+      const day = db.calendar.find(d => d.day_number === currentSelectedDay);
+      if (!day) return;
+
+      if (field === 'notes') {
+        day.notes = value;
+      } else if (field === 'time') {
+        day.time_spent_minutes = parseInt(value) || 0;
+        
+        // Check for study quest
+        updateQuestProgress('study', day.time_spent_minutes);
+      } else if (field === 'rating') {
+        day.rating = parseInt(value) || null;
+      }
+
+      saveToLocalStorage();
+    }
+
+    function evaluateWeeklyMilestoneReward(weekName) {
+      const weekDays = db.calendar.filter(d => d.week === weekName);
+      const completedDays = weekDays.filter(d => d.completed).length;
+
+      if (completedDays === 7) {
+        if (!db.user_profile.weekly_rewards_claimed[weekName]) {
+          db.user_profile.balance += 1000;
+          db.user_profile.weekly_rewards_claimed[weekName] = true;
+          
+          addXP(500); // 500 XP reward!
+
+          const milestone = db.milestones.find(m => m.name === `${weekName.toUpperCase()} COMPLETE`);
+          if (milestone) milestone.completed = true;
+
+          showNotification(`🏆 Weekly Goal Completed! +1000 rs and +500 XP bonus credited.`, "success");
+        }
+      }
+    }
+
+    function reverseWeeklyMilestoneReward(weekName) {
+      if (db.user_profile.weekly_rewards_claimed[weekName]) {
+        db.user_profile.balance = Math.max(0, db.user_profile.balance - 1000);
+        db.user_profile.weekly_rewards_claimed[weekName] = false;
+
+        const milestone = db.milestones.find(m => m.name === `${weekName.toUpperCase()} COMPLETE`);
+        if (milestone) milestone.completed = false;
+
+        showNotification("⚠️ Weekly bonus revoked (week incomplete).", "warning");
+      }
+    }
+
+    // Match questions logic
+    function matchDSAMatchingQuestions(eveningTaskStr) {
+      if (!eveningTaskStr || !eveningTaskStr.startsWith("DSA:")) return [];
+      const cleanStr = eveningTaskStr.replace("DSA:", "").trim();
+      const problemTitles = cleanStr.split(',').map(s => s.trim());
+      return db.dsa_problems.filter(p => problemTitles.some(title => p.title.toLowerCase() === title.toLowerCase()));
+    }
+
+    function matchSQLMatchingQuestions(afternoonTask, morningTask) {
+      const combined = ((afternoonTask || "") + " " + (morningTask || "")).toUpperCase();
+      const matchedTopics = [];
+      const topics = ["SELECT", "WHERE", "JOIN", "GROUP BY", "HAVING", "WINDOW FUNCTIONS", "SUBQUERY", "CASE", "CTE", "AGGREGATE", "INDEX", "SCD"];
+      
+      topics.forEach(topic => {
+        if (combined.includes(topic)) matchedTopics.push(topic);
+      });
+
+      if (matchedTopics.length === 0) return [];
+      return db.sql_question_bank.filter(q => matchedTopics.some(topic => q.topic.toUpperCase().includes(topic) || q.category.toUpperCase().includes(topic))).slice(0, 3);
+    }
+
+    function matchDEConceptsMatchingQuestions(morningTask) {
+      if (!morningTask) return [];
+      const combined = morningTask.toUpperCase();
+      const matchedCats = [];
+      const categories = ["ETL", "WAREHOUSE", "SPARK", "PYSPARK", "CLOUD", "AIRFLOW", "DBT", "FILE FORMAT", "LINEAGE", "IDEMPOTENCY"];
+      categories.forEach(cat => {
+        if (combined.includes(cat)) matchedCats.push(cat);
+      });
+      if (matchedCats.length === 0) return [];
+      return db.de_concepts.filter(q => matchedCats.some(cat => q.category.toUpperCase().includes(cat) || q.question.toUpperCase().includes(cat))).slice(0, 2);
+    }
+
+    // ================= QUESTION BANKS =================
+
+    function populateQBankCategories() {
+      const select = document.getElementById('qbank-filter-category');
+      select.innerHTML = '<option value="">All Categories</option>';
+      
+      let categories = [];
+      if (activeQBankTab === 'sql') {
+        categories = [...new Set(db.sql_question_bank.map(q => q.category))];
+      } else if (activeQBankTab === 'dsa') {
+        categories = [...new Set(db.dsa_problems.map(q => q.category))];
+      } else if (activeQBankTab === 'pyspark') {
+        categories = [...new Set(db.pyspark_questions.map(q => q.category))];
+      } else if (activeQBankTab === 'concepts') {
+        categories = [...new Set(db.de_concepts.map(q => q.category))];
+      } else if (activeQBankTab === 'interview') {
+        categories = [...new Set(db.interview_prep.map(q => q.category))];
+      }
+
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    function switchQBankTab(tabName) {
+      activeQBankTab = tabName;
+      document.querySelectorAll('.qbank-tab-btn').forEach(btn => {
+        if (btn.innerText.toLowerCase().includes(tabName === 'concepts' ? 'core concepts' : tabName)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      qbankFilters = { search: '', difficulty: '', status: '', category: '' };
+      document.getElementById('qbank-search-input').value = '';
+      document.getElementById('qbank-filter-difficulty').value = '';
+      document.getElementById('qbank-filter-status').value = '';
+      
+      if (tabName === 'sql' || tabName === 'dsa') {
+        document.getElementById('qbank-filter-difficulty').style.display = 'block';
+      } else {
+        document.getElementById('qbank-filter-difficulty').style.display = 'none';
+      }
+
+      qbankCurrentPage = 1;
+      populateQBankCategories();
+      applyQBankFilters();
+    }
+
+    function applyQBankFilters() {
+      qbankFilters.search = document.getElementById('qbank-search-input').value.toLowerCase();
+      qbankFilters.difficulty = document.getElementById('qbank-filter-difficulty').value.toLowerCase();
+      qbankFilters.status = document.getElementById('qbank-filter-status').value.toLowerCase();
+      qbankFilters.category = document.getElementById('qbank-filter-category').value;
+
+      let list = [];
+      if (activeQBankTab === 'sql') {
+        list = db.sql_question_bank;
+      } else if (activeQBankTab === 'dsa') {
+        list = db.dsa_problems;
+      } else if (activeQBankTab === 'pyspark') {
+        list = db.pyspark_questions;
+      } else if (activeQBankTab === 'concepts') {
+        list = db.de_concepts;
+      } else if (activeQBankTab === 'interview') {
+        list = db.interview_prep;
+      }
+
+      filteredQuestionsList = list.filter(item => {
+        let qText = (item.question || item.title || "").toLowerCase();
+        let catText = (item.category || "").toLowerCase();
+        let topicText = (item.topic || item.pattern || "").toLowerCase();
+        let matchesSearch = qText.includes(qbankFilters.search) || catText.includes(qbankFilters.search) || topicText.includes(qbankFilters.search);
+        
+        let matchesDiff = true;
+        if (qbankFilters.difficulty) {
+          matchesDiff = (item.difficulty || "").toLowerCase() === qbankFilters.difficulty;
+        }
+
+        let matchesStatus = true;
+        if (qbankFilters.status) {
+          const isSolved = item.solved || item.first_solved || item.mastered || item.practiced;
+          const isInProgress = item.notes && !isSolved || item.confidence_level > 0 && !isSolved;
+          
+          if (qbankFilters.status === 'solved') {
+            matchesStatus = isSolved;
+          } else if (qbankFilters.status === 'inprogress') {
+            matchesStatus = isInProgress;
+          } else if (qbankFilters.status === 'unsolved') {
+            matchesStatus = !isSolved && !isInProgress;
+          }
+        }
+
+        let matchesCategory = true;
+        if (qbankFilters.category) {
+          matchesCategory = item.category === qbankFilters.category;
+        }
+
+        return matchesSearch && matchesDiff && matchesStatus && matchesCategory;
+      });
+
+      renderQBankTable();
+    }
+
+    function resetQBankFilters() {
+      document.getElementById('qbank-search-input').value = '';
+      document.getElementById('qbank-filter-difficulty').value = '';
+      document.getElementById('qbank-filter-status').value = '';
+      document.getElementById('qbank-filter-category').value = '';
+      applyQBankFilters();
+    }
+
+    function renderQBankTable() {
+      const headers = document.getElementById('qbank-table-headers');
+      const body = document.getElementById('qbank-table-body');
+      body.innerHTML = '';
+
+      if (activeQBankTab === 'sql') {
+        headers.innerHTML = `
+          <th style="width: 80px;">ID</th>
+          <th>Question</th>
+          <th>Category</th>
+          <th>Topic</th>
+          <th>Difficulty</th>
+          <th>Status</th>
+        `;
+      } else if (activeQBankTab === 'dsa') {
+        headers.innerHTML = `
+          <th style="width: 80px;">ID</th>
+          <th>Problem Title</th>
+          <th>Category</th>
+          <th>Pattern</th>
+          <th>Difficulty</th>
+          <th>DE Relevance</th>
+          <th>Status</th>
+        `;
+      } else if (activeQBankTab === 'pyspark') {
+        headers.innerHTML = `
+          <th style="width: 80px;">ID</th>
+          <th>Question / Target Concept</th>
+          <th>Category</th>
+          <th>Status</th>
+        `;
+      } else if (activeQBankTab === 'concepts') {
+        headers.innerHTML = `
+          <th style="width: 80px;">ID</th>
+          <th>Concept / Question</th>
+          <th>Category</th>
+          <th>Importance</th>
+          <th>Status</th>
+        `;
+      } else if (activeQBankTab === 'interview') {
+        headers.innerHTML = `
+          <th style="width: 80px;">ID</th>
+          <th>Question</th>
+          <th>Category</th>
+          <th>Tips Preview</th>
+          <th>Status</th>
+        `;
+      }
+
+      const startIdx = (qbankCurrentPage - 1) * qbankPageSize;
+      const endIdx = Math.min(startIdx + qbankPageSize, filteredQuestionsList.length);
+      const pageList = filteredQuestionsList.slice(startIdx, endIdx);
+
+      document.getElementById('qbank-pagination-info').innerText = `Showing ${filteredQuestionsList.length > 0 ? startIdx + 1 : 0}-${endIdx} of ${filteredQuestionsList.length}`;
+      document.getElementById('btn-page-prev').disabled = qbankCurrentPage === 1;
+      document.getElementById('btn-page-next').disabled = endIdx >= filteredQuestionsList.length;
+
+      if (pageList.length === 0) {
+        body.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-tertiary); padding: 48px 0;">No matching questions found</td></tr>`;
+        return;
+      }
+
+      pageList.forEach(item => {
+        const row = document.createElement('tr');
+        row.onclick = () => openWorkspaceModal(item.id, activeQBankTab);
+
+        let statusText = '';
+        const isSolved = item.solved || item.first_solved || item.mastered || item.practiced;
+        const isInProgress = item.notes && !isSolved || item.confidence_level > 0 && !isSolved;
+        if (isSolved) {
+          statusText = '<span class="badge badge-success">Solved</span>';
+        } else if (isInProgress) {
+          statusText = '<span class="badge badge-warning">In Progress</span>';
+        } else {
+          statusText = '<span class="badge badge-gray">Unsolved</span>';
+        }
+
+        if (activeQBankTab === 'sql') {
+          row.innerHTML = `
+            <td>#${item.id}</td>
+            <td><strong>${item.question}</strong></td>
+            <td>${item.category}</td>
+            <td><code style="font-family: var(--font-code); font-size: 11px;">${item.topic}</code></td>
+            <td><span class="difficulty-label ${item.difficulty.toLowerCase()}">${item.difficulty}</span></td>
+            <td>${statusText}</td>
+          `;
+        } else if (activeQBankTab === 'dsa') {
+          row.innerHTML = `
+            <td>#${item.id}</td>
+            <td><strong>${item.title}</strong></td>
+            <td>${item.category}</td>
+            <td>${item.pattern}</td>
+            <td><span class="difficulty-label ${item.difficulty.toLowerCase()}">${item.difficulty}</span></td>
+            <td style="font-size: 11px; color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.de_relevance || ''}</td>
+            <td>${statusText}</td>
+          `;
+        } else if (activeQBankTab === 'pyspark') {
+          row.innerHTML = `
+            <td>#${item.id}</td>
+            <td><strong>${item.question}</strong></td>
+            <td>${item.category}</td>
+            <td>${statusText}</td>
+          `;
+        } else if (activeQBankTab === 'concepts') {
+          let impBadge = '';
+          if (item.importance === 'High') {
+            impBadge = '<span class="badge badge-danger">High</span>';
+          } else if (item.importance === 'Medium') {
+            impBadge = '<span class="badge badge-warning">Medium</span>';
+          } else {
+            impBadge = '<span class="badge badge-gray">Low</span>';
+          }
+          row.innerHTML = `
+            <td>#${item.id}</td>
+            <td><strong>${item.question}</strong></td>
+            <td>${item.category}</td>
+            <td>${impBadge}</td>
+            <td>${statusText}</td>
+          `;
+        } else if (activeQBankTab === 'interview') {
+          row.innerHTML = `
+            <td>#${item.id}</td>
+            <td><strong>${item.question}</strong></td>
+            <td>${item.category}</td>
+            <td style="font-size: 11px; color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.preparation_tips || ''}</td>
+            <td>${statusText}</td>
+          `;
+        }
+
+        body.appendChild(row);
+      });
+    }
+
+    function changeQBankPage(delta) {
+      qbankCurrentPage += delta;
+      renderQBankTable();
+    }
+
+    // ================= QUESTION WORKSPACE MODAL =================
+
+    function openWorkspaceModal(id, categoryKey) {
+      activeWorkspaceQuestionId = id;
+      activeWorkspaceCategory = categoryKey;
+      
+      let item = null;
+      if (categoryKey === 'sql') {
+        item = db.sql_question_bank.find(q => q.id === id);
+      } else if (categoryKey === 'dsa') {
+        item = db.dsa_problems.find(q => q.id === id);
+      } else if (categoryKey === 'pyspark') {
+        item = db.pyspark_questions.find(q => q.id === id);
+      } else if (categoryKey === 'concepts') {
+        item = db.de_concepts.find(q => q.id === id);
+      } else if (categoryKey === 'interview') {
+        item = db.interview_prep.find(q => q.id === id);
+      }
+
+      if (!item) return;
+
+      // Populate Title Info
+      const catBadge = document.getElementById('modal-category-badge');
+      catBadge.innerText = categoryKey.toUpperCase();
+      
+      const diffBadge = document.getElementById('modal-difficulty-badge');
+      if (item.difficulty) {
+        diffBadge.innerText = item.difficulty;
+        diffBadge.className = `badge difficulty-label ${item.difficulty.toLowerCase()}`;
+        diffBadge.style.display = 'inline-block';
+      } else {
+        diffBadge.style.display = 'none';
+      }
+
+      const topicLabel = document.getElementById('modal-topic-label');
+      if (item.topic || item.pattern) {
+        topicLabel.innerText = `Topic: ${item.topic || item.pattern}`;
+        topicLabel.style.display = 'inline-block';
+      } else {
+        topicLabel.style.display = 'none';
+      }
+
+      document.getElementById('modal-question-title').innerText = item.question || item.title;
+
+      // Populate Question Description
+      const descArea = document.getElementById('modal-question-description');
+      descArea.value = item.detailed_description || item.question || item.title;
+
+      // Prefill code structures
+      const codeEditorLabel = document.getElementById('modal-editor-label');
+      const codeArea = document.getElementById('modal-question-code');
+      codeArea.value = item.solution_code || "";
+
+      if (categoryKey === 'sql') {
+        codeEditorLabel.innerText = '💻 SQL Solution Code (Monospace)';
+        codeArea.placeholder = '-- Write your SQL query here...';
+      } else if (categoryKey === 'dsa') {
+        codeEditorLabel.innerText = '💻 Python DSA Solution Code (Monospace)';
+        codeArea.placeholder = 'def solve(self, *args, **kwargs):\n    # Write Python code';
+        if (item.leetcode_link) {
+          topicLabel.innerHTML += ` | <a href="${item.leetcode_link}" target="_blank" style="color: var(--accent-indigo); text-decoration: none;">LeetCode Link 🔗</a>`;
+        }
+      } else {
+        codeEditorLabel.innerText = '💻 Python/PySpark/Notes Script (Monospace)';
+        codeArea.placeholder = '# Write Spark scripts or summary snippets here...';
+      }
+
+      // Notes
+      document.getElementById('modal-question-notes').value = item.notes || '';
+
+      // Status dropdown
+      const statusSelect = document.getElementById('modal-status-select');
+      const isSolved = item.solved || item.first_solved || item.mastered || item.practiced;
+      const isInProgress = item.notes && !isSolved || item.confidence_level > 0 && !isSolved;
+      
+      if (isSolved) {
+        statusSelect.value = 'solved';
+      } else if (isInProgress) {
+        statusSelect.value = 'inprogress';
+      } else {
+        statusSelect.value = 'unsolved';
+      }
+
+      // Confidence Star Rating
+      setModalConfidence(item.confidence_level || 0);
+
+      // Shop Theme override checkbox display
+      const matrixCheckbox = document.getElementById('modal-theme-matrix-checkbox');
+      const matrixLabel = document.getElementById('matrix-theme-toggle-label');
+      
+      if (db.user_profile.theme_matrix_editor) {
+        matrixLabel.style.display = 'flex';
+        matrixCheckbox.checked = item.use_matrix_theme || false;
+        toggleMatrixTheme(true);
+      } else {
+        matrixLabel.style.display = 'none';
+        matrixCheckbox.checked = false;
+        codeArea.classList.remove('matrix-editor-theme');
+      }
+
+      // Reset Modal Nav Tab to Workspace
+      switchModalNav('workspace');
+
+      // Open Modal
+      document.getElementById('workspace-modal').classList.add('active');
+    }
+
+    // Modal navigation v2 (Workspace vs AI coach tabs)
+    function switchModalNav(navKey) {
+      activeModalView = navKey;
+      const workspaceBtn = document.getElementById('modal-tab-workspace');
+      const aiBtn = document.getElementById('modal-tab-ai');
+      
+      const leftCol = document.getElementById('modal-left-column');
+      const notesView = document.getElementById('modal-workspace-notes-view');
+      const aiView = document.getElementById('modal-ai-coach-view');
+
+      if (navKey === 'workspace') {
+        workspaceBtn.classList.add('active');
+        aiBtn.classList.remove('active');
+        
+        // Single split view
+        leftCol.style.gridColumn = 'span 1';
+        notesView.style.display = 'flex';
+        aiView.style.display = 'none';
+      } else {
+        workspaceBtn.classList.remove('active');
+        aiBtn.classList.add('active');
+        
+        // Split view: Left shows code, right shows AI panel
+        leftCol.style.gridColumn = 'span 1';
+        notesView.style.display = 'none';
+        aiView.style.display = 'flex';
+
+        // Load active AI panel contents
+        renderAICoachSubTab();
+      }
+    }
+
+    // Matrix theme style toggler
+    function toggleMatrixTheme(force = false) {
+      const codeArea = document.getElementById('modal-question-code');
+      const checkbox = document.getElementById('modal-theme-matrix-checkbox');
+      
+      if (checkbox.checked) {
+        codeArea.classList.add('matrix-editor-theme');
+      } else {
+        codeArea.classList.remove('matrix-editor-theme');
+      }
+
+      // Save theme preference inside question
+      const item = getActiveWorkspaceItem();
+      if (item) {
+        item.use_matrix_theme = checkbox.checked;
+      }
+    }
+
+    function closeWorkspaceModal() {
+      document.getElementById('workspace-modal').classList.remove('active');
+    }
+
+    function setModalConfidence(rating) {
+      modalConfidenceRating = rating;
+      const buttons = document.querySelectorAll('#modal-stars-selector .star-btn');
+      buttons.forEach((btn, idx) => {
+        if (idx < rating) {
+          btn.classList.add('filled');
+        } else {
+          btn.classList.remove('filled');
+        }
+      });
+    }
+
+    function getActiveWorkspaceItem() {
+      let item = null;
+      if (activeWorkspaceCategory === 'sql') {
+        item = db.sql_question_bank.find(q => q.id === activeWorkspaceQuestionId);
+      } else if (activeWorkspaceCategory === 'dsa') {
+        item = db.dsa_problems.find(q => q.id === activeWorkspaceQuestionId);
+      } else if (activeWorkspaceCategory === 'pyspark') {
+        item = db.pyspark_questions.find(q => q.id === activeWorkspaceQuestionId);
+      } else if (activeWorkspaceCategory === 'concepts') {
+        item = db.de_concepts.find(q => q.id === activeWorkspaceQuestionId);
+      } else if (activeWorkspaceCategory === 'interview') {
+        item = db.interview_prep.find(q => q.id === activeWorkspaceQuestionId);
+      }
+      return item;
+    }
+
+    function saveWorkspaceQuestion() {
+      const item = getActiveWorkspaceItem();
+      if (!item) return;
+
+      item.detailed_description = document.getElementById('modal-question-description').value;
+      item.notes = document.getElementById('modal-question-notes').value;
+      item.solution_code = document.getElementById('modal-question-code').value;
+      item.confidence_level = modalConfidenceRating;
+
+      const statusVal = document.getElementById('modal-status-select').value;
+      const wasSolved = item.solved || item.first_solved || item.mastered || item.practiced;
+
+      if (statusVal === 'solved') {
+        if (activeWorkspaceCategory === 'sql') {
+          item.solved = true;
+          item.date_solved = simulatedDate;
+          
+          // Quest evaluator
+          updateQuestProgress('sql', 1);
+        } else if (activeWorkspaceCategory === 'dsa') {
+          item.first_solved = true;
+          item.date_first_solved = simulatedDate;
+          
+          // Quest evaluator
+          updateQuestProgress('dsa', 1);
+        } else if (activeWorkspaceCategory === 'pyspark' || activeWorkspaceCategory === 'concepts') {
+          item.mastered = true;
+          item.date_reviewed = simulatedDate;
+        } else if (activeWorkspaceCategory === 'interview') {
+          item.practiced = true;
+          item.date_practiced = simulatedDate;
+        }
+
+        if (!wasSolved) {
+          db.user_profile.balance += 25;
+          
+          // Earn XP for solving question!
+          const xpGained = (activeWorkspaceCategory === 'sql' || activeWorkspaceCategory === 'dsa') ? 150 : 100;
+          addXP(xpGained);
+
+          triggerMilestoneConfetti();
+          showNotification(`🎉 Question Solved! +25 rs and +${xpGained} XP.`, "success");
+        }
+      } else {
+        if (activeWorkspaceCategory === 'sql') {
+          item.solved = false;
+        } else if (activeWorkspaceCategory === 'dsa') {
+          item.first_solved = false;
+        } else if (activeWorkspaceCategory === 'pyspark' || activeWorkspaceCategory === 'concepts') {
+          item.mastered = false;
+        } else if (activeWorkspaceCategory === 'interview') {
+          item.practiced = false;
+        }
+
+        if (wasSolved) {
+          db.user_profile.balance = Math.max(0, db.user_profile.balance - 25);
+          const xpGained = (activeWorkspaceCategory === 'sql' || activeWorkspaceCategory === 'dsa') ? 150 : 100;
+          deductXP(xpGained);
+        }
+      }
+
+      evaluateAchievements();
+      saveToLocalStorage();
+      closeWorkspaceModal();
+      
+      renderUserProfileWidget();
+      renderOverallStatistics();
+      renderDaysList();
+      applyQBankFilters();
+    }
+
+    // ================= CLIENT-SIDE GEMINI AI COACH ENGINE =================
+
+    // Call Gemini API 3.1 Flash Lite Endpoint
+    async function callGeminiAPI(systemInstruction, promptText) {
+      // Default to user key, fallback to prefilled placeholder
+      const apiKey = db.user_profile.gemini_api_key || "__GEMINI_API_KEY__";
+      if (!apiKey || apiKey === "__GEMINI_API_KEY__") {
+        throw new Error("No Gemini API key supplied in Settings!");
+      }
+      
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+      
+      const payload = {
+        systemInstruction: {
+          parts: [{ text: systemInstruction }]
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: promptText }]
+          }
+        ]
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Failed calling Gemini API. Verify your API key.");
+      }
+
+      const resData = await response.json();
+      if (!resData.candidates || resData.candidates.length === 0) {
+        throw new Error("Empty response from AI engine.");
+      }
+      
+      // Increment AI Call statistics
+      db.user_profile.ai_coach_calls = (db.user_profile.ai_coach_calls || 0) + 1;
+      evaluateAchievements();
+      saveToLocalStorage();
+
+      return resData.candidates[0].content.parts[0].text;
+    }
+
+    // Switch AI Sub-tabs (Schema/Context, Code Hint, Custom doubts chat)
+    function switchAISubTab(subTabKey) {
+      activeAISubTab = subTabKey;
+      document.querySelectorAll('.ai-subtab-btn').forEach(btn => {
+        if (btn.id.includes(subTabKey)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Show/Hide Custom Doubt Input chat field
+      const chatInput = document.getElementById('ai-chat-input-row');
+      if (subTabKey === 'chat') {
+        chatInput.style.display = 'flex';
+      } else {
+        chatInput.style.display = 'none';
+      }
+
+      renderAICoachSubTab();
+    }
+
+    // Render contents based on active subtab
+    function renderAICoachSubTab() {
+      const box = document.getElementById('ai-coach-box');
+      const item = getActiveWorkspaceItem();
+      if (!item) return;
+
+      if (activeAISubTab === 'schema') {
+        if (item.ai_schema_context) {
+          box.innerHTML = parseMarkdown(item.ai_schema_context);
+        } else {
+          box.innerHTML = `
+            <div style="text-align: center; padding-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <span>📊 Context, Mock tables and Schema not generated yet.</span>
+              <button class="btn btn-primary" onclick="generateAISchemaAndContext()">🤖 Generate Reference Schema & Context</button>
+              <span style="font-size: 11px; color: var(--text-tertiary);">AI will model realistic tables and schemas for this query. (Solution code stays hidden)</span>
+            </div>
+          `;
+        }
+      } else if (activeAISubTab === 'hint') {
+        if (item.ai_code_review_hint) {
+          box.innerHTML = parseMarkdown(item.ai_code_review_hint);
+        } else {
+          box.innerHTML = `
+            <div style="text-align: center; padding-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <span>💡 Review your current query or python solution.</span>
+              <button class="btn btn-primary" onclick="generateAICodeReviewHint()">🤖 Review Solution & Give Hints</button>
+              <span style="font-size: 11px; color: var(--text-tertiary);">Coach checks your logic/syntax errors and gives guiding hints without coding it.</span>
+            </div>
+          `;
+        }
+      } else if (activeAISubTab === 'chat') {
+        // Render Chat History
+        if (!item.ai_chat_history || item.ai_chat_history.length === 0) {
+          box.innerHTML = `
+            <div class="ai-bubble coach">
+              👋 Hello! I am your AI Data Engineering Coach. Ask me any doubts, logic, or syntax questions about <strong>${item.question || item.title}</strong>. I will guide you to find the answer myself!
+            </div>
+          `;
+        } else {
+          box.innerHTML = '';
+          item.ai_chat_history.forEach(msg => {
+            const bubble = document.createElement('div');
+            bubble.className = `ai-bubble ${msg.role}`;
+            bubble.innerHTML = `<strong>${msg.role === 'coach' ? '🤖 Coach' : '👤 You'}:</strong><br>${parseMarkdown(msg.text)}`;
+            box.appendChild(bubble);
+          });
+          // Scroll to bottom
+          box.scrollTop = box.scrollHeight;
+        }
+      }
+    }
+
+    // Call AI to generate SQL tables/context or DSA test cases
+    async function generateAISchemaAndContext() {
+      const box = document.getElementById('ai-coach-box');
+      const item = getActiveWorkspaceItem();
+      if (!item) return;
+
+      box.innerHTML = `
+        <div class="ai-loader">
+          <div class="spinner"></div>
+          <span>🤖 Coach is modeling database schemas and reference context...</span>
+        </div>
+      `;
+
+      const sysInstruction = "You are the Data Engineering Coach. You help the user understand queries and algorithms. You must NEVER give the direct solution code (neither SQL nor Python). You explain concepts, provide markdown tables, database schemas, and edge case parameters.";
+      
+      const prompt = `
+        Problem Category: ${activeWorkspaceCategory.toUpperCase()}
+        Topic: ${item.topic || item.pattern || "N/A"}
+        Question: ${item.question || item.title}
+        
+        Task:
+        If it's a SQL question, please generate a realistic database table schema (markdown tables) and 3-5 rows of sample data for the tables needed, and describe what the columns represent.
+        If it's a DSA question, please generate 3 dry-run test cases showing input and expected outputs, and explain key edge cases.
+        If it's a PySpark or DE concept question, explain the underlying architecture, mechanics, and trade-offs.
+        
+        Remember: DO NOT write the SQL or Python solution code. Focus purely on reference context.
+      `;
+
+      try {
+        const result = await callGeminiAPI(sysInstruction, prompt);
+        item.ai_schema_context = result;
+        saveToLocalStorage();
+        renderAICoachSubTab();
+      } catch (err) {
+        box.innerHTML = `<span style="color: var(--accent-danger); font-weight:700;">❌ Error: ${err.message}</span>`;
+      }
+    }
+
+    // Call AI to review currently written code
+    async function generateAICodeReviewHint() {
+      const box = document.getElementById('ai-coach-box');
+      const item = getActiveWorkspaceItem();
+      if (!item) return;
+
+      const userCode = document.getElementById('modal-question-code').value;
+      if (!userCode.trim()) {
+        alert("Please write some code inside the editor before asking for a review!");
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="ai-loader">
+          <div class="spinner"></div>
+          <span>🤖 Coach is reviewing your code logic...</span>
+        </div>
+      `;
+
+      const sysInstruction = "You are the Data Engineering Coach. You help the user debug their solution. You must NEVER write or provide the corrected code. You identify bugs, syntax flaws, logic errors, or performance issues in their code, and give 2-3 guiding hints so they can solve it themselves.";
+      
+      const prompt = `
+        Problem Category: ${activeWorkspaceCategory.toUpperCase()}
+        Question: ${item.question || item.title}
+        User's Current Code:
+        \`\`\`
+        ${userCode}
+        \`\`\`
+        
+        Task:
+        1. Review the user's code. Mention what is correct.
+        2. Identify logic bugs, syntax flaws, or performance issues.
+        3. Provide 2-3 incremental hints to help the user fix their code.
+        
+        Remember: DO NOT write any corrected SQL queries or python code. Guide the user to rewrite it.
+      `;
+
+      try {
+        const result = await callGeminiAPI(sysInstruction, prompt);
+        item.ai_code_review_hint = result;
+        saveToLocalStorage();
+        renderAICoachSubTab();
+      } catch (err) {
+        box.innerHTML = `<span style="color: var(--accent-danger); font-weight:700;">❌ Error: ${err.message}</span>`;
+      }
+    }
+
+    // Custom chat with AI Coach
+    async function sendAICustomMessage() {
+      const input = document.getElementById('ai-chat-text-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const item = getActiveWorkspaceItem();
+      if (!item) return;
+
+      if (!item.ai_chat_history) item.ai_chat_history = [];
+
+      // Append user message
+      item.ai_chat_history.push({ role: 'user', text: text });
+      input.value = '';
+      renderAICoachSubTab();
+
+      const box = document.getElementById('ai-coach-box');
+      const loader = document.createElement('div');
+      loader.className = 'ai-loader';
+      loader.innerHTML = `<div class="spinner"></div><span>🤖 Coach is typing...</span>`;
+      box.appendChild(loader);
+      box.scrollTop = box.scrollHeight;
+
+      const sysInstruction = "You are the Data Engineering Coach. Answer the user's doubts about database operations, python code, spark transformations, or cloud architectures. You must NEVER give the direct solution code. Focus on logic, hints, concepts, and structures.";
+      
+      const userCode = document.getElementById('modal-question-code').value;
+
+      // Construct history context
+      let historyContext = "";
+      item.ai_chat_history.slice(-6, -1).forEach(msg => {
+        historyContext += `${msg.role === 'coach' ? 'AI' : 'User'}: ${msg.text}\n`;
+      });
+
+      const prompt = `
+        Question: ${item.question || item.title}
+        User's Current Code:
+        \`\`\`
+        ${userCode}
+        \`\`\`
+        
+        Chat History:
+        ${historyContext}
+        
+        User's Question: ${text}
+      `;
+
+      try {
+        const response = await callGeminiAPI(sysInstruction, prompt);
+        loader.remove();
+        item.ai_chat_history.push({ role: 'coach', text: response });
+        saveToLocalStorage();
+        renderAICoachSubTab();
+      } catch (err) {
+        loader.remove();
+        alert("Error communicating with AI: " + err.message);
+      }
+    }
+
+    // ================= MILESTONE & PROJECTS =================
+
+    function renderMilestoneBadges() {
+      const container = document.getElementById('milestone-badges-list');
+      container.innerHTML = '';
+
+      db.milestones.forEach(m => {
+        const badge = document.createElement('span');
+        let statusClass = m.completed ? 'badge-success' : 'badge-gray';
+        badge.className = `badge ${statusClass}`;
+        badge.innerText = `${m.name} (${m.completed ? 'Earned' : 'Locked'})`;
+        container.appendChild(badge);
+      });
+    }
+
+    function renderProjects() {
+      const container = document.getElementById('projects-grid-container');
+      container.innerHTML = '';
+
+      const filterType = document.getElementById('project-filter-type').value;
+      const filterStatus = document.getElementById('project-filter-status').value;
+
+      let list = db.projects;
+      if (filterType) {
+        list = list.filter(p => p.type === filterType);
+      }
+      if (filterStatus) {
+        if (filterStatus === 'solved') {
+          list = list.filter(p => p.completed);
+        } else {
+          list = list.filter(p => !p.completed);
+        }
+      }
+
+      list.forEach(project => {
+        const card = document.createElement('div');
+        const isMega = project.type === 'Mega';
+        card.className = `project-card ${isMega ? 'mega' : ''}`;
+        
+        card.innerHTML = `
+          <div class="project-card-header">
+            <div>
+              <span class="badge ${isMega ? 'badge-indigo' : 'badge-gray'}">${project.type} Project</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-left: 6px;">📅 Due: ${project.due_by}</span>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-tertiary);">${project.week}</span>
+          </div>
+
+          <div class="project-title">${project.name}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);"><strong>Stack:</strong> ${project.technologies}</div>
+          <div class="project-deliverable">🎯 <strong>Deliverables:</strong> ${project.deliverables}</div>
+          
+          <div class="workspace-section" style="margin-top: 8px;">
+            <label style="font-size: 9px; font-weight: 700; color: var(--text-secondary);">GitHub Repository Link</label>
+            <input type="text" class="input-field" style="padding: 4px 8px; font-size: 12px;" value="${project.github_url || ''}" placeholder="https://github.com/..." onchange="saveProjectMeta('${project.name}', '${project.week}', 'github', this.value)">
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <button class="btn btn-status-toggle ${project.completed ? 'active-completed' : ''}" onclick="toggleProjectCompletion('${project.name}', '${project.week}')">
+              ${project.completed ? '✅ Completed (+1000rs)' : 'Mark Completed'}
+            </button>
+            <span style="font-size: 10px; color: var(--text-tertiary); font-style: italic;">Skills: ${project.key_skills.slice(0, 30)}...</span>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function saveProjectMeta(name, week, field, value) {
+      const proj = db.projects.find(p => p.name === name && p.week === week);
+      if (proj) {
+        if (field === 'github') {
+          proj.github_url = value;
+        }
+        saveToLocalStorage();
+      }
+    }
+
+    function toggleProjectCompletion(name, week) {
+      const proj = db.projects.find(p => p.name === name && p.week === week);
+      if (!proj) return;
+
+      const wasCompleted = proj.completed;
+      proj.completed = !proj.completed;
+
+      if (proj.completed && !wasCompleted) {
+        const award = proj.type === 'Mega' ? 1000 : 100;
+        db.user_profile.balance += award;
+
+        // Earn XP on project completion
+        const xpAward = proj.type === 'Mega' ? 1000 : 200;
+        addXP(xpAward);
+
+        if (proj.type === 'Mega') {
+          const monthNumStr = proj.month.toUpperCase();
+          const milestone = db.milestones.find(m => m.name === `${monthNumStr} COMPLETE` || m.name === `${monthNumStr} MILESTONE`);
+          if (milestone) milestone.completed = true;
+        }
+
+        triggerMilestoneConfetti();
+        showNotification(`🏆 Project Completed! +${award} rs and +${xpAward} XP bonus credited.`, "success");
+      } else if (!proj.completed && wasCompleted) {
+        const award = proj.type === 'Mega' ? 1000 : 100;
+        db.user_profile.balance = Math.max(0, db.user_profile.balance - award);
+        
+        const xpAward = proj.type === 'Mega' ? 1000 : 200;
+        deductXP(xpAward);
+        
+        if (proj.type === 'Mega') {
+          const monthNumStr = proj.month.toUpperCase();
+          const milestone = db.milestones.find(m => m.name === `${monthNumStr} COMPLETE` || m.name === `${monthNumStr} MILESTONE`);
+          if (milestone) milestone.completed = false;
+        }
+      }
+
+      saveToLocalStorage();
+      renderUserProfileWidget();
+      renderOverallStatistics();
+      renderProjects();
+      renderMilestoneBadges();
+      evaluateAchievements();
+    }
+
+    // ================= CHEAT SHEETS =================
+
+    function switchCheatSheetTab(sheetKey) {
+      saveActiveCheatSheet(false);
+
+      activeCheatSheetKey = sheetKey;
+      document.querySelectorAll('#view-cheatsheets .nav-item').forEach(btn => {
+        if (btn.id.includes(sheetKey.replace('_', ''))) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      renderCheatSheetContent();
+    }
+
+    function renderCheatSheetContent() {
+      const sheet = db.cheat_sheets[activeCheatSheetKey];
+      if (!sheet) return;
+
+      const titleMap = {
+        'python_patterns': '🐍 Python Patterns Cheat Sheet',
+        'sql_patterns': '📊 SQL Optimization Patterns Cheat Sheet',
+        'pyspark_configs': '⚡ PySpark Common Configurations',
+        'system_design': '🌐 Data System Design Frameworks',
+        'behavioral_stories': '💬 Behavioral STAR Interview Stories',
+        'questions_to_ask': '❓ Questions to Ask Interviewers'
+      };
+
+      document.getElementById('cs-editor-title').innerText = titleMap[activeCheatSheetKey] || 'Edit Cheat Sheet';
+      document.getElementById('cs-editor-last-updated').innerText = sheet.last_updated ? `Last Updated: ${sheet.last_updated}` : 'Last Updated: Never';
+      document.getElementById('cs-editor-textarea').value = sheet.content || '';
+    }
+
+    function saveActiveCheatSheet(showNotify = true) {
+      const text = document.getElementById('cs-editor-textarea').value;
+      if (!db.cheat_sheets[activeCheatSheetKey]) {
+        db.cheat_sheets[activeCheatSheetKey] = { content: "", last_updated: null };
+      }
+
+      db.cheat_sheets[activeCheatSheetKey].content = text;
+      db.cheat_sheets[activeCheatSheetKey].last_updated = simulatedDate;
+
+      saveToLocalStorage();
+      
+      if (showNotify) {
+        showNotification("💾 Cheat sheet saved successfully.", "success");
+      }
+    }
+
+    // ================= SETTINGS & PROFILE =================
+
+    function populateSettingsForm() {
+      document.getElementById('setting-profile-name').value = db.user_profile.name || '';
+      document.getElementById('setting-profile-email').value = db.user_profile.email || '';
+      document.getElementById('setting-profile-goal').value = db.user_profile.goal || '';
+      document.getElementById('setting-profile-companies').value = (db.user_profile.target_companies || []).join(', ');
+      document.getElementById('setting-profile-hours').value = db.user_profile.daily_study_hours || 5;
+      
+      // Gemini Key
+      document.getElementById('setting-gemini-key').value = db.user_profile.gemini_api_key || '';
+    }
+
+    function saveProfileSettings() {
+      db.user_profile.name = document.getElementById('setting-profile-name').value;
+      db.user_profile.email = document.getElementById('setting-profile-email').value;
+      db.user_profile.goal = document.getElementById('setting-profile-goal').value;
+      
+      const compStr = document.getElementById('setting-profile-companies').value;
+      db.user_profile.target_companies = compStr.split(',').map(s => s.trim()).filter(Boolean);
+      
+      db.user_profile.daily_study_hours = parseInt(document.getElementById('setting-profile-hours').value) || 5;
+
+      // Gemini Key
+      db.user_profile.gemini_api_key = document.getElementById('setting-gemini-key').value;
+
+      saveToLocalStorage();
+      showNotification("👤 Profile settings updated.", "success");
+    }
+
+    function triggerImportInput() {
+      document.getElementById('database-import-file').click();
+    }
+
+    function importDatabaseFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.calendar && imported.sql_question_bank && imported.user_profile) {
+            db = imported;
+            saveToLocalStorage();
+            setupUI();
+            showNotification("📤 Database JSON imported successfully!", "success");
+          } else {
+            alert('Invalid database schema. Missing core keys.');
+          }
+        } catch (err) {
+          alert('Failed to parse JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportDatabaseFile() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "de_master_roadmap_database.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      showNotification("📥 Database JSON download triggered.", "success");
+    }
+
+    function resetToBaselineDatabase() {
+      if (confirm("Are you absolutely sure you want to delete all notes, codes, and tracker progress? This action is irreversible.")) {
+        localStorage.removeItem('de_master_roadmap_data');
+        showNotification("🔥 All tracker data has been reset to baseline.", "warning");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    }
+
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.style.position = 'fixed';
+      notification.style.bottom = '24px';
+      notification.style.right = '24px';
+      notification.style.padding = '12px 20px';
+      notification.style.borderRadius = '8px';
+      notification.style.boxShadow = 'var(--shadow-lg)';
+      notification.style.fontSize = '13px';
+      notification.style.fontWeight = '600';
+      notification.style.zIndex = '3000';
+      notification.style.animation = 'fade-in 0.2s ease-out';
+      
+      if (type === 'success') {
+        notification.style.backgroundColor = 'var(--accent-success-light)';
+        notification.style.border = '1px solid var(--accent-success)';
+        notification.style.color = 'var(--accent-success-hover)';
+      } else if (type === 'warning') {
+        notification.style.backgroundColor = 'var(--accent-warning-light)';
+        notification.style.border = '1px solid var(--accent-warning)';
+        notification.style.color = '#b45309';
+      } else {
+        notification.style.backgroundColor = 'var(--accent-danger-light)';
+        notification.style.border = '1px solid var(--accent-danger)';
+        notification.style.color = 'var(--accent-danger)';
+      }
+
+      notification.innerText = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.2s ease';
+        setTimeout(() => notification.remove(), 200);
+      }, 3000);
+    }
+
+    // ================= LIGHTWEIGHT REGEX MARKDOWN PARSER =================
+    function parseMarkdown(text) {
+      if (!text) return "";
+      let html = text;
+      
+      // Escape basic HTML tags to prevent cross site scripting
+      html = escapeHTML(html);
+
+      // Code blocks
+      html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+        return `<pre style="background-color: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 8px; font-family: var(--font-code); font-size: 12px; overflow-x: auto; margin: 8px 0; text-align: left;"><code>${code.trim()}</code></pre>`;
+      });
+
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code style="font-family: var(--font-code); background-color: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-size: 11px; color: var(--accent-indigo);">$1</code>');
+
+      // Bold text
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+      // Headers
+      html = html.replace(/^### (.*$)/gim, '<h4 style="font-size: 13px; font-weight: 700; margin-top: 12px; color: var(--text-primary);">$1</h4>');
+      html = html.replace(/^## (.*$)/gim, '<h3 style="font-size: 14px; font-weight: 800; margin-top: 16px; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">$1</h3>');
+      html = html.replace(/^# (.*$)/gim, '<h2 style="font-size: 16px; font-weight: 800; margin-top: 20px; color: var(--text-primary);">$1</h2>');
+
+      // Unordered Lists
+      html = html.replace(/^\s*-\s+(.*$)/gim, '<li style="margin-left: 16px; list-style-type: disc; font-size: 12px; color: var(--text-secondary);">$1</li>');
+      
+      // Ordered Lists
+      html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li style="margin-left: 16px; list-style-type: decimal; font-size: 12px; color: var(--text-secondary);">$1</li>');
+
+      // Simple Table parser
+      const lines = html.split('\n');
+      let inTable = false;
+      let tableHTML = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (line.startsWith('|')) {
+          if (!inTable) {
+            inTable = true;
+            tableHTML = '<table style="width:100%; border-collapse:collapse; margin: 12px 0; font-size: 12px; border: 1px solid var(--border-color);">';
+          }
+          
+          let cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+          if (line.includes('---')) continue;
+          
+          tableHTML += '<tr style="border-bottom: 1px solid var(--border-color);">';
+          cells.forEach(cell => {
+            if (tableHTML.indexOf('</th>') === -1) {
+              tableHTML += `<th style="background-color: var(--bg-app); padding: 8px 12px; font-weight: 700; text-align: left; border-right: 1px solid var(--border-color);">${cell}</th>`;
+            } else {
+              tableHTML += `<td style="padding: 8px 12px; border-right: 1px solid var(--border-color);">${cell}</td>`;
+            }
+          });
+          tableHTML += '</tr>';
+        } else {
+          if (inTable) {
+            inTable = false;
+            tableHTML += '</table>';
+            lines[i - 1] = tableHTML;
+          }
+        }
+      }
+      html = lines.join('\n');
+
+      // Paragraph breaks
+      html = html.replace(/\n\n/g, '<p style="margin: 8px 0; font-size: 12px; color: var(--text-secondary);"></p>');
+
+      return html;
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // ================= CONFETTI & REWARDS ENGINE =================
+    
+    let canvas, ctx;
+    let particles = [];
+
+    function initConfetti() {
+      canvas = document.getElementById('confetti-canvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function triggerMilestoneConfetti() {
+      particles = [];
+      const colors = ['#4f46e5', '#10b981', '#f59e0b', '#f43f5e', '#a855f7'];
+      for (let i = 0; i < 120; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: canvas.height + Math.random() * 50,
+          vx: (Math.random() - 0.5) * 8,
+          vy: -Math.random() * 15 - 10,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 8 + 4,
+          shape: Math.random() > 0.5 ? 'circle' : 'square',
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.005
+        });
+      }
+      requestAnimationFrame(updateConfetti);
+    }
+
+    function updateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let active = false;
+
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3;
+        p.alpha -= p.decay;
+
+        if (p.alpha > 0) {
+          active = true;
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          if (p.shape === 'circle') {
+            ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+          } else {
+            ctx.rect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+          }
+          ctx.fill();
+          ctx.restore();
+        }
+      });
+
+      if (active) {
+        requestAnimationFrame(updateConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  </script>
+</body>
+</html>

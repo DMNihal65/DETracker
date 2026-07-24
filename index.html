@@ -3532,7 +3532,7 @@
       if (!eveningTaskStr || !eveningTaskStr.startsWith("DSA:")) return [];
       const cleanStr = eveningTaskStr.replace("DSA:", "").trim();
       const problemTitles = cleanStr.split(',').map(s => s.trim());
-      return db.dsa_problems.filter(p => problemTitles.some(title => p.title.toLowerCase() === title.toLowerCase()));
+      return db.dsa_problems.filter(p => problemTitles.some(title => (p.title || '').toLowerCase() === title.toLowerCase()));
     }
 
     function matchSQLMatchingQuestions(afternoonTask, morningTask) {
@@ -3545,7 +3545,7 @@
       });
 
       if (matchedTopics.length === 0) return [];
-      return db.sql_question_bank.filter(q => matchedTopics.some(topic => q.topic.toUpperCase().includes(topic) || q.category.toUpperCase().includes(topic))).slice(0, 3);
+      return db.sql_question_bank.filter(q => matchedTopics.some(topic => (q.topic || '').toUpperCase().includes(topic) || (q.category || '').toUpperCase().includes(topic))).slice(0, 3);
     }
 
     function matchDEConceptsMatchingQuestions(morningTask) {
@@ -3557,7 +3557,7 @@
         if (combined.includes(cat)) matchedCats.push(cat);
       });
       if (matchedCats.length === 0) return [];
-      return db.de_concepts.filter(q => matchedCats.some(cat => q.category.toUpperCase().includes(cat) || q.question.toUpperCase().includes(cat))).slice(0, 2);
+      return db.de_concepts.filter(q => matchedCats.some(cat => (q.category || '').toUpperCase().includes(cat) || (q.question || '').toUpperCase().includes(cat))).slice(0, 2);
     }
 
     // ================= QUESTION BANKS =================
@@ -3759,7 +3759,7 @@
             <td><strong>${item.question}</strong></td>
             <td>${item.category}</td>
             <td><code style="font-family: var(--font-code); font-size: 11px;">${item.topic}</code></td>
-            <td><span class="difficulty-label ${item.difficulty.toLowerCase()}">${item.difficulty}</span></td>
+            <td><span class="difficulty-label ${(item.difficulty || '').toLowerCase()}">${item.difficulty || ''}</span></td>
             <td>${statusText}</td>
           `;
         } else if (activeQBankTab === 'dsa') {
@@ -3768,7 +3768,7 @@
             <td><strong>${item.title}</strong></td>
             <td>${item.category}</td>
             <td>${item.pattern}</td>
-            <td><span class="difficulty-label ${item.difficulty.toLowerCase()}">${item.difficulty}</span></td>
+            <td><span class="difficulty-label ${(item.difficulty || '').toLowerCase()}">${item.difficulty || ''}</span></td>
             <td style="font-size: 11px; color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.de_relevance || ''}</td>
             <td>${statusText}</td>
           `;

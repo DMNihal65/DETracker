@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Serve static frontend files from current directory
-app.use(express.static(path.join(__dirname)));
+// Serve static frontend files from Vite's built output folder 'dist'
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Database connection
 const connectionString = process.env.DATABASE_URL;
@@ -618,14 +618,12 @@ app.delete('/api/admin/user/:userId', async (req, res) => {
   }
 });
 
-// Route for admin dashboard HTML
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// Catch-all middleware to serve the main HTML page
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// Catch-all middleware to serve built index.html for React SPA router (Vite)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path === '/de_master_roadmap_database.json') {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Start server locally (skip listen when deploying as a Vercel Serverless Function)

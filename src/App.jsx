@@ -187,102 +187,95 @@ export default function App() {
     const merged = { ...baseline };
 
     // Merge User Profile
-    if (data.user_profile) {
-      merged.user_profile = {
-        ...merged.user_profile,
-        name: data.user_profile.name,
-        email: data.user_profile.email,
-        goal: data.user_profile.goal,
-        target_companies: data.user_profile.target_companies || [],
-        daily_study_hours: data.user_profile.daily_study_hours || 5,
-        balance: data.user_profile.balance || 0,
-        current_streak: data.user_profile.current_streak || 0,
-        best_streak: data.user_profile.best_streak || 0,
-        xp: data.user_profile.xp || 0,
-        level: data.user_profile.level || 1,
-        ai_coach_calls: data.user_profile.ai_coach_calls || 0,
-        gemini_api_key: data.user_profile.gemini_api_key || '',
-        simulated_date: data.user_profile.simulated_date || getLocalDateString(),
-        last_checkin_date: data.user_profile.last_checkin_date,
-        last_quest_date: data.user_profile.last_quest_date,
-        claimed_checkin_dates: data.user_profile.claimed_checkin_dates || [],
-        daily_quests: data.user_profile.daily_quests || []
-      };
-    }
+    const profile = data.profile || null;
+    merged.user_profile = {
+      name: profile?.name || currentUser?.name || 'Student',
+      email: profile?.email || currentUser?.email || '',
+      goal: profile?.goal || currentUser?.goal || '',
+      target_companies: profile?.target_companies || [],
+      daily_study_hours: profile?.daily_study_hours || 5,
+      balance: profile?.balance || 0,
+      current_streak: profile?.current_streak || 0,
+      best_streak: profile?.best_streak || 0,
+      xp: profile?.xp || 0,
+      level: profile?.level || 1,
+      ai_coach_calls: profile?.ai_coach_calls || 0,
+      gemini_api_key: profile?.gemini_api_key || '',
+      simulated_date: profile?.simulated_date || getLocalDateString(),
+      last_checkin_date: profile?.last_checkin_date,
+      last_quest_date: profile?.last_quest_date,
+      claimed_checkin_dates: profile?.claimed_checkin_dates || [],
+      daily_quests: profile?.daily_quests || []
+    };
 
     // Merge Calendar Days
-    if (data.calendar_progress) {
-      data.calendar_progress.forEach(row => {
-        const targetDay = merged.calendar.find(d => d.day_number === row.day_number);
-        if (targetDay) {
-          targetDay.completed = row.completed;
-          targetDay.morning_completed = row.morning_completed;
-          targetDay.afternoon_completed = row.afternoon_completed;
-          targetDay.evening_completed = row.evening_completed;
-          targetDay.penalized = row.penalized;
-          targetDay.notes = row.notes || '';
-          targetDay.time_spent_minutes = row.time_spent_minutes || 0;
-          targetDay.rating = row.rating;
-        }
-      });
-    }
+    const calendarRows = data.calendar || [];
+    calendarRows.forEach(row => {
+      const targetDay = merged.calendar.find(d => d.day_number === row.day_number);
+      if (targetDay) {
+        targetDay.completed = row.completed;
+        targetDay.morning_completed = row.morning_completed;
+        targetDay.afternoon_completed = row.afternoon_completed;
+        targetDay.evening_completed = row.evening_completed;
+        targetDay.penalized = row.penalized;
+        targetDay.notes = row.notes || '';
+        targetDay.time_spent_minutes = row.time_spent_minutes || 0;
+        targetDay.rating = row.rating;
+      }
+    });
 
     // Merge Questions
-    if (data.question_progress) {
-      data.question_progress.forEach(row => {
-        let qList = [];
-        if (row.category === 'sql') qList = merged.sql_question_bank;
-        else if (row.category === 'dsa') qList = merged.dsa_problems;
-        else if (row.category === 'pyspark') qList = merged.pyspark_questions;
-        else if (row.category === 'concepts') qList = merged.de_concepts;
-        else if (row.category === 'interview') qList = merged.interview_prep;
+    const questionRows = data.questions || [];
+    questionRows.forEach(row => {
+      let qList = [];
+      if (row.category === 'sql') qList = merged.sql_question_bank;
+      else if (row.category === 'dsa') qList = merged.dsa_problems;
+      else if (row.category === 'pyspark') qList = merged.pyspark_questions;
+      else if (row.category === 'concepts') qList = merged.de_concepts;
+      else if (row.category === 'interview') qList = merged.interview_prep;
 
-        const targetQ = qList.find(q => q.id === row.item_id);
-        if (targetQ) {
-          targetQ.solved = row.solved;
-          targetQ.notes = row.notes || '';
-          targetQ.solution_code = row.solution_code || '';
-          targetQ.confidence_level = row.confidence_level || 0;
-          targetQ.attempts = row.attempts || 0;
-          targetQ.ai_schema_context = row.ai_schema_context || null;
-          targetQ.ai_code_review_hint = row.ai_code_review_hint || null;
-          targetQ.ai_chat_history = row.ai_chat_history || [];
-        }
-      });
-    }
+      const targetQ = qList.find(q => q.id === row.item_id);
+      if (targetQ) {
+        targetQ.solved = row.solved;
+        targetQ.notes = row.notes || '';
+        targetQ.solution_code = row.solution_code || '';
+        targetQ.confidence_level = row.confidence_level || 0;
+        targetQ.attempts = row.attempts || 0;
+        targetQ.ai_schema_context = row.ai_schema_context || null;
+        targetQ.ai_code_review_hint = row.ai_code_review_hint || null;
+        targetQ.ai_chat_history = row.ai_chat_history || [];
+      }
+    });
 
     // Merge Projects
-    if (data.projects_progress) {
-      data.projects_progress.forEach(row => {
-        const targetProj = merged.projects.find(p => p.name === row.project_name);
-        if (targetProj) {
-          targetProj.completed = row.completed;
-          targetProj.github_url = row.github_url || '';
-          targetProj.notes = row.notes || '';
-          targetProj.rating = row.rating;
-          targetProj.time_spent_hours = row.time_spent_hours || 0;
-        }
-      });
-    }
+    const projectRows = data.projects || [];
+    projectRows.forEach(row => {
+      const targetProj = merged.projects.find(p => p.name === row.project_name);
+      if (targetProj) {
+        targetProj.completed = row.completed;
+        targetProj.github_url = row.github_url || '';
+        targetProj.notes = row.notes || '';
+        targetProj.rating = row.rating;
+        targetProj.time_spent_hours = row.time_spent_hours || 0;
+      }
+    });
 
     // Merge Milestones
-    if (data.milestones_progress) {
-      data.milestones_progress.forEach(row => {
-        const targetMs = merged.milestones.find(m => m.name === row.milestone_name);
-        if (targetMs) {
-          targetMs.completed = row.completed;
-        }
-      });
-    }
+    const milestoneRows = data.milestones || [];
+    milestoneRows.forEach(row => {
+      const targetMs = merged.milestones.find(m => m.name === row.milestone_name);
+      if (targetMs) {
+        targetMs.completed = row.completed;
+      }
+    });
 
     // Merge Cheatsheets
-    if (data.cheat_sheets) {
-      data.cheat_sheets.forEach(row => {
-        if (merged.cheat_sheets[row.sheet_key]) {
-          merged.cheat_sheets[row.sheet_key].content = row.content || '';
-        }
-      });
-    }
+    const cheatsheetRows = data.cheat_sheets || [];
+    cheatsheetRows.forEach(row => {
+      if (merged.cheat_sheets[row.sheet_key]) {
+        merged.cheat_sheets[row.sheet_key].content = row.content || '';
+      }
+    });
 
     setDb(merged);
   };

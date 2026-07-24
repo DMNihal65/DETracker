@@ -1,4 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {
+  LayoutDashboard,
+  Calendar,
+  Code,
+  Folder,
+  FileText,
+  Settings,
+  Shield,
+  LogOut,
+  Flame,
+  Zap,
+  Check,
+  X,
+  Search,
+  AlertTriangle,
+  Save,
+  Loader2,
+  Lock,
+  MessageSquare,
+  TrendingUp,
+  User,
+  HelpCircle,
+  Play
+} from 'lucide-react';
 
 // Timezone-aware local date helper
 function getLocalDateString() {
@@ -18,25 +42,25 @@ function parseMarkdown(text) {
 
   // Code blocks
   html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
-    return `<pre style="background-color: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; margin: 8px 0; text-align: left;"><code>${code.trim()}</code></pre>`;
+    return `<pre class="bg-slate-900 text-slate-100 p-4 rounded-xl font-code text-xs overflow-x-auto my-3 text-left"><code>${code.trim()}</code></pre>`;
   });
 
   // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code style="font-family: monospace; background-color: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 11px; color: #0d9488;">$1</code>');
+  html = html.replace(/`([^`]+)`/g, '<code class="font-code bg-slate-100 px-1.5 py-0.5 rounded text-xs text-brand-600 font-semibold">$1</code>');
 
   // Bold text
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
   // Headers
-  html = html.replace(/^### (.*$)/gim, '<h4 style="font-size: 13px; font-weight: 700; margin-top: 12px; color: #0f172a;">$1</h4>');
-  html = html.replace(/^## (.*$)/gim, '<h3 style="font-size: 14px; font-weight: 800; margin-top: 16px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">$1</h3>');
-  html = html.replace(/^# (.*$)/gim, '<h2 style="font-size: 16px; font-weight: 800; margin-top: 20px; color: #0f172a;">$1</h2>');
+  html = html.replace(/^### (.*$)/gim, '<h4 class="text-sm font-bold mt-4 mb-1.5 text-slate-800">$1</h4>');
+  html = html.replace(/^## (.*$)/gim, '<h3 class="text-base font-extrabold mt-5 mb-2 text-slate-800 border-b border-slate-200 pb-1">$1</h3>');
+  html = html.replace(/^# (.*$)/gim, '<h2 class="text-lg font-black mt-6 mb-3 text-slate-900">$1</h2>');
 
   // Unordered Lists
-  html = html.replace(/^\s*-\s+(.*$)/gim, '<li style="margin-left: 16px; list-style-type: disc; font-size: 12px; color: #475569;">$1</li>');
+  html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-xs text-slate-600 my-0.5">$1</li>');
 
   // Ordered Lists
-  html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li style="margin-left: 16px; list-style-type: decimal; font-size: 12px; color: #475569;">$1</li>');
+  html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li class="ml-4 list-decimal text-xs text-slate-600 my-0.5">$1</li>');
 
   // Simple Table parser
   const lines = html.split('\n');
@@ -48,18 +72,18 @@ function parseMarkdown(text) {
     if (line.startsWith('|')) {
       if (!inTable) {
         inTable = true;
-        tableHTML = '<table style="width:100%; border-collapse:collapse; margin: 12px 0; font-size: 12px; border: 1px solid #e2e8f0;">';
+        tableHTML = '<table class="w-full border-collapse border border-slate-200 text-xs my-3">';
       }
 
       let cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
       if (line.includes('---')) continue;
 
-      tableHTML += '<tr style="border-bottom: 1px solid #e2e8f0;">';
+      tableHTML += '<tr class="border-b border-slate-200">';
       cells.forEach(cell => {
         if (tableHTML.indexOf('</th>') === -1) {
-          tableHTML += `<th style="background-color: #f8fafc; padding: 8px 12px; font-weight: 700; text-align: left; border-right: 1px solid #e2e8f0;">${cell}</th>`;
+          tableHTML += `<th class="bg-slate-50 p-2.5 font-bold text-left border-r border-slate-200 text-slate-700">${cell}</th>`;
         } else {
-          tableHTML += `<td style="padding: 8px 12px; border-right: 1px solid #e2e8f0;">${cell}</td>`;
+          tableHTML += `<td class="p-2.5 border-r border-slate-200 text-slate-600 bg-white">${cell}</td>`;
         }
       });
       tableHTML += '</tr>';
@@ -74,7 +98,7 @@ function parseMarkdown(text) {
   html = lines.join('\n');
 
   // Paragraph breaks
-  html = html.replace(/\n\n/g, '<p style="margin: 8px 0; font-size: 12px; color: #475569;"></p>');
+  html = html.replace(/\n\n/g, '<p class="my-2 text-xs text-slate-600"></p>');
 
   return html;
 }
@@ -135,28 +159,24 @@ export default function App() {
     setNotifications(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 4000);
+    }, 4500);
   };
 
   // 1. Initial Load: Fetch Curriculum and Check Session
   useEffect(() => {
     async function init() {
       try {
-        // Fetch dynamic curriculum configuration
         const resCurriculum = await fetch(API_BASE_URL + '/de_master_roadmap_database.json');
         if (!resCurriculum.ok) throw new Error("Could not load curriculum data.");
         const baselineData = await resCurriculum.json();
 
-        // Check local storage session
         const sessionUser = localStorage.getItem('de_tracker_user');
         if (sessionUser) {
           const parsedUser = JSON.parse(sessionUser);
           setCurrentUser(parsedUser);
 
-          // Fetch user progress from database
           const resProgress = await fetch(API_BASE_URL + `/api/user/${parsedUser.id}/data`);
           if (!resProgress.ok) {
-            // Force logout if user session is invalid on database
             logout();
             return;
           }
@@ -175,7 +195,6 @@ export default function App() {
     init();
   }, []);
 
-  // Sync session authentication
   const logout = () => {
     localStorage.removeItem('de_tracker_user');
     setCurrentUser(null);
@@ -280,7 +299,7 @@ export default function App() {
     setDb(merged);
   };
 
-  // 2. Synchronizers communicating client updates to PostgreSQL
+  // Synchronizers communicating client updates to PostgreSQL
   const syncProfile = async (updatedProfile) => {
     if (!currentUser) return;
     try {
@@ -362,22 +381,6 @@ export default function App() {
     }
   };
 
-  const syncMilestone = async (milestone) => {
-    if (!currentUser) return;
-    try {
-      await fetch(API_BASE_URL + `/api/user/${currentUser.id}/update-milestone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          milestone_name: milestone.name,
-          completed: milestone.completed
-        })
-      });
-    } catch (err) {
-      console.error("Milestone sync error:", err);
-    }
-  };
-
   const syncCheatSheet = async (key, sheet) => {
     if (!currentUser) return;
     try {
@@ -407,7 +410,7 @@ export default function App() {
         showNotification("All tracker data has been reset to baseline!", "success");
         setTimeout(() => {
           window.location.reload();
-        }, 1500);
+        }, 1200);
       } else {
         showNotification("Failed to reset database progress.", "error");
       }
@@ -416,7 +419,7 @@ export default function App() {
     }
   };
 
-  // 3. User Authentication Submit Triggers
+  // User Authentication Submit Triggers
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -461,7 +464,7 @@ export default function App() {
     }
   };
 
-  // 4. Admin Authentication & Listing Triggers
+  // Admin Authentication & Listing Triggers
   const handleAdminVerify = async (e) => {
     e.preventDefault();
     if (adminPinInput === '6565') {
@@ -491,7 +494,7 @@ export default function App() {
     try {
       const res = await fetch(API_BASE_URL + `/api/admin/user/${userId}`, { method: 'DELETE' });
       if (res.ok) {
-        showNotification("User account wiped successfully.", "success");
+        showNotification("User wiped successfully.", "success");
         if (adminSelectedUser && adminSelectedUser.id === userId) {
           setAdminSelectedUser(null);
           setAdminSelectedUserProgress(null);
@@ -512,7 +515,6 @@ export default function App() {
       const res = await fetch(API_BASE_URL + `/api/user/${user.id}/data`);
       if (res.ok) {
         const progress = await res.json();
-        // Merge progress against baseline just for admin rendering
         const resBaseline = await fetch(API_BASE_URL + '/de_master_roadmap_database.json');
         const baseline = await resBaseline.json();
         mergeUserProgress(baseline, progress);
@@ -523,7 +525,7 @@ export default function App() {
     }
   };
 
-  // 5. Upgraded Gemini AI Coach Integration
+  // Upgraded Gemini AI Coach Integration
   const callGemini = async (systemInstruction, promptText) => {
     const apiKey = db.user_profile.gemini_api_key;
     if (!apiKey) {
@@ -571,12 +573,10 @@ export default function App() {
       const updatedQ = { ...selectedQuestion, ai_schema_context: result };
       setSelectedQuestion(updatedQ);
 
-      // Update in QBank collection
       let list = getQuestionList(selectedQuestionCategory);
       const idx = list.findIndex(q => q.id === selectedQuestion.id);
       if (idx !== -1) list[idx] = updatedQ;
 
-      // Update profile XP (+10 for generating context)
       const updatedProfile = {
         ...db.user_profile,
         xp: db.user_profile.xp + 10,
@@ -633,12 +633,10 @@ export default function App() {
       const updatedQ = { ...selectedQuestion, ai_code_review_hint: result };
       setSelectedQuestion(updatedQ);
 
-      // Update in QBank collection
       let list = getQuestionList(selectedQuestionCategory);
       const idx = list.findIndex(q => q.id === selectedQuestion.id);
       if (idx !== -1) list[idx] = updatedQ;
 
-      // Update profile XP (+15 for asking review)
       const updatedProfile = {
         ...db.user_profile,
         xp: db.user_profile.xp + 15,
@@ -671,7 +669,6 @@ export default function App() {
     const userMessage = { role: "user", text: aiChatQuery };
     const currentHistory = [...(selectedQuestion.ai_chat_history || []), userMessage];
 
-    // Build prompt with conversation history context
     let promptContext = `Question: ${selectedQuestion.question || selectedQuestion.title}\n\n`;
     currentHistory.forEach(msg => {
       promptContext += `${msg.role === 'coach' ? 'Coach' : 'User'}: ${msg.text}\n`;
@@ -685,7 +682,6 @@ export default function App() {
       const updatedQ = { ...selectedQuestion, ai_chat_history: updatedHistory };
       setSelectedQuestion(updatedQ);
 
-      // Update in QBank collection
       let list = getQuestionList(selectedQuestionCategory);
       const idx = list.findIndex(q => q.id === selectedQuestion.id);
       if (idx !== -1) list[idx] = updatedQ;
@@ -710,7 +706,7 @@ export default function App() {
     return [];
   };
 
-  // 6. Checkbox Checkin System (Calendar Day Completion)
+  // Checkbox Checkin System (Calendar Day Completion)
   const toggleCalendarTask = (dayNumber, taskKey) => {
     const updatedCalendar = [...db.calendar];
     const day = updatedCalendar.find(d => d.day_number === dayNumber);
@@ -718,12 +714,10 @@ export default function App() {
 
     day[taskKey] = !day[taskKey];
 
-    // Auto-calculate day overall completion status
     const allChecked = day.morning_completed && day.afternoon_completed && day.evening_completed;
     const wasCompleted = day.completed;
     day.completed = allChecked;
 
-    // Gain XP for completing checklists
     let xpGained = 0;
     if (day[taskKey]) {
       if (taskKey === 'morning_completed') xpGained += 15;
@@ -735,7 +729,6 @@ export default function App() {
       else if (taskKey === 'evening_completed') xpGained -= 20;
     }
 
-    // Full day bonus
     if (allChecked && !wasCompleted) {
       xpGained += 50;
       showNotification("☀️ Day fully completed! +50 XP bonus!");
@@ -743,14 +736,12 @@ export default function App() {
       xpGained -= 50;
     }
 
-    // Check streak adjustments if simulated date matches checkin
     let currentStreak = db.user_profile.current_streak || 0;
     let bestStreak = db.user_profile.best_streak || 0;
     const todayStr = db.user_profile.simulated_date || getLocalDateString();
     
     if (allChecked && !wasCompleted) {
       if (db.user_profile.last_checkin_date !== todayStr) {
-        // Increment streak if last checkin was yesterday or none
         const lastCheckin = db.user_profile.last_checkin_date;
         if (!lastCheckin) {
           currentStreak = 1;
@@ -761,7 +752,7 @@ export default function App() {
           if (lastCheckin === yesterdayStr) {
             currentStreak += 1;
           } else if (lastCheckin !== todayStr) {
-            currentStreak = 1; // Streak broken, restart
+            currentStreak = 1;
           }
         }
         if (currentStreak > bestStreak) bestStreak = currentStreak;
@@ -783,12 +774,10 @@ export default function App() {
       user_profile: updatedProfile
     }));
 
-    // Trigger API syncs
     syncCalendarDay(day);
     syncProfile(updatedProfile);
   };
 
-  // Save Day Detail inputs (duration and notes)
   const saveDayDetails = () => {
     if (!selectedDay) return;
     const updatedCalendar = [...db.calendar];
@@ -804,7 +793,6 @@ export default function App() {
     showNotification("📅 Day details saved successfully.");
   };
 
-  // Submit coding workspace question completion
   const handleSolveQuestion = (solvedState) => {
     const updatedQ = {
       ...selectedQuestion,
@@ -819,7 +807,6 @@ export default function App() {
     const idx = list.findIndex(q => q.id === selectedQuestion.id);
     if (idx !== -1) list[idx] = updatedQ;
 
-    // Award XP on solve
     let xpGained = 0;
     if (solvedState && !selectedQuestion.solved) {
       xpGained = 100;
@@ -841,7 +828,6 @@ export default function App() {
     syncQuestion(selectedQuestionCategory, updatedQ);
   };
 
-  // Projects Completion Toggle
   const toggleProject = (projectName, week, checked) => {
     const updatedProjects = [...db.projects];
     const proj = updatedProjects.find(p => p.name === projectName && p.week === week);
@@ -870,7 +856,6 @@ export default function App() {
     syncProfile(updatedProfile);
   };
 
-  // Project Fields Update
   const updateProjectFields = (name, week, fields) => {
     const updatedProjects = [...db.projects];
     const proj = updatedProjects.find(p => p.name === name && p.week === week);
@@ -881,33 +866,38 @@ export default function App() {
     syncProject(proj);
   };
 
-  // Load baseline loading view
+  // Loading spinner layout
   if (loading || !db) {
     return (
-      <div className="auth-overlay" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div className="spinner" style={{ borderTopColor: '#0d9488' }}></div>
-        <h2 style={{ fontSize: '18px', color: '#0f172a' }}>Loading Curriculum Cockpit...</h2>
+      <div className="fixed inset-0 flex flex-col justify-center items-center bg-slate-50 gap-4">
+        <Loader2 className="animate-spin text-brand-600 h-10 w-10" />
+        <h2 className="text-lg font-bold text-slate-800 font-main">Loading Curriculum Cockpit...</h2>
       </div>
     );
   }
 
-  // Auth Portal Page Render
+  // Authentication page layout with Tailwind
   if (!currentUser) {
     return (
-      <div className="auth-overlay" style={{ display: 'flex' }}>
-        <div className="auth-container">
-          <div className="auth-header">
-            <h2>💻 DE Mastery Tracker</h2>
-            <p>{authMode === 'login' ? 'Enter credentials to load database session' : 'Create a new account on Neon Cloud'}</p>
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4 font-main">
+        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl w-full max-w-md text-center">
+          <div className="mb-6">
+            <h2 className="text-2xl font-black text-slate-900 flex items-center justify-center gap-2">
+              <Code className="text-brand-600 h-7 w-7" />
+              DE Mastery Tracker
+            </h2>
+            <p className="text-xs text-slate-500 mt-2">
+              {authMode === 'login' ? 'Enter credentials to load database session' : 'Create a new account on Neon Cloud'}
+            </p>
           </div>
 
-          <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
             {authMode === 'signup' && (
-              <div className="workspace-section">
-                <label className="workspace-label">Full Name</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Full Name</label>
                 <input
                   type="text"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   value={signupForm.name}
                   onChange={e => setSignupForm({ ...signupForm, name: e.target.value })}
                   placeholder="Enter your name"
@@ -915,11 +905,11 @@ export default function App() {
               </div>
             )}
 
-            <div className="workspace-section">
-              <label className="workspace-label">Email Address</label>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Email Address</label>
               <input
                 type="email"
-                className="input-field"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                 value={authMode === 'login' ? loginForm.email : signupForm.email}
                 onChange={e => authMode === 'login'
                   ? setLoginForm({ ...loginForm, email: e.target.value })
@@ -929,11 +919,11 @@ export default function App() {
             </div>
 
             {authMode === 'signup' && (
-              <div className="workspace-section">
-                <label className="workspace-label">DE Target Goal</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">DE Target Goal</label>
                 <input
                   type="text"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   value={signupForm.goal}
                   onChange={e => setSignupForm({ ...signupForm, goal: e.target.value })}
                   placeholder="e.g. Big Data Engineer"
@@ -941,30 +931,30 @@ export default function App() {
               </div>
             )}
 
-            <div className="workspace-section">
-              <label className="workspace-label">Security PIN (6565)</label>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Security PIN (6565)</label>
               <input
                 type="password"
-                className="input-field"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm text-center tracking-widest font-mono"
                 maxLength="6"
                 value={authMode === 'login' ? loginForm.pin : signupForm.pin}
                 onChange={e => authMode === 'login'
                   ? setLoginForm({ ...loginForm, pin: e.target.value })
                   : setSignupForm({ ...signupForm, pin: e.target.value })}
-                placeholder="Enter 4-6 digit PIN"
+                placeholder="••••"
               />
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
+            <button type="submit" className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg transition-colors text-sm mt-6">
               {authMode === 'login' ? 'Sign In' : 'Sign Up'}
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '12px' }}>
+          <div className="text-center mt-6 text-xs text-slate-500">
             {authMode === 'login' ? (
-              <span>New student? <a href="#" style={{ color: '#0d9488', fontWeight: 600 }} onClick={() => setAuthMode('signup')}>Create Account</a></span>
+              <span>New student? <a href="#" className="text-brand-600 font-bold hover:underline" onClick={() => setAuthMode('signup')}>Create Account</a></span>
             ) : (
-              <span>Already registered? <a href="#" style={{ color: '#0d9488', fontWeight: 600 }} onClick={() => setAuthMode('login')}>Sign In</a></span>
+              <span>Already registered? <a href="#" className="text-brand-600 font-bold hover:underline" onClick={() => setAuthMode('login')}>Sign In</a></span>
             )}
           </div>
         </div>
@@ -972,7 +962,7 @@ export default function App() {
     );
   }
 
-  // Filter QBank list based on inputs
+  // Filter QBank lists
   const filteredQBankList = getQuestionList(activeQBankTab).filter(item => {
     const searchVal = qbankFilters.search.toLowerCase();
     const matchesSearch = (item.question || item.title || '').toLowerCase().includes(searchVal) ||
@@ -995,178 +985,169 @@ export default function App() {
   });
 
   return (
-    <div className="app-container">
-      {/* Toast notifications container */}
-      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {notifications.map(n => (
-          <div key={n.id} style={{
-            padding: '12px 20px',
-            backgroundColor: n.type === 'success' ? '#10b981' : '#ef4444',
-            color: '#fff',
-            borderRadius: '8px',
-            fontSize: '13px',
-            fontWeight: 600,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            animation: 'slideIn 0.3s ease'
-          }}>
-            {n.message}
-          </div>
-        ))}
-      </div>
-
+    <div className="flex min-h-screen bg-slate-50 font-main">
+      
       {/* ================= LEFT SIDEBAR ================= */}
-      <aside className="sidebar">
+      <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between fixed h-screen overflow-y-auto z-40">
         <div>
-          <div className="brand-section">
-            <h1 className="brand-title">💻 DE Mastery</h1>
-            <div className="brand-subtitle">Curriculum Cockpit</div>
+          <div className="mb-8">
+            <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <Code className="text-brand-600 h-6 w-6" />
+              DE Mastery
+            </h1>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Curriculum Cockpit</div>
           </div>
 
-          <nav className="nav-menu">
-            <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-              <span>Dashboard</span>
-            </div>
-            <div className={`nav-item ${activeTab === 'calendar' ? 'active' : ''}`} onClick={() => setActiveTab('calendar')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span>182-Day Calendar</span>
-            </div>
-            <div className={`nav-item ${activeTab === 'qbank' ? 'active' : ''}`} onClick={() => setActiveTab('qbank')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-              <span>Question Banks</span>
-            </div>
-            <div className={`nav-item ${activeTab === 'projects' ? 'active' : ''}`} onClick={() => setActiveTab('projects')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-              <span>Megaprojects</span>
-            </div>
-            <div className={`nav-item ${activeTab === 'cheatsheets' ? 'active' : ''}`} onClick={() => setActiveTab('cheatsheets')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span>Cheat Sheets</span>
-            </div>
-            <div className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>Admin Cockpit</span>
-            </div>
-            <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              <span>Settings</span>
-            </div>
+          <nav className="space-y-1">
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+              { id: 'calendar', label: '182-Day Calendar', icon: Calendar },
+              { id: 'qbank', label: 'Question Banks', icon: Code },
+              { id: 'projects', label: 'Megaprojects', icon: Folder },
+              { id: 'cheatsheets', label: 'Cheat Sheets', icon: FileText },
+              { id: 'admin', label: 'Admin Cockpit', icon: Shield },
+              { id: 'settings', label: 'Settings', icon: Settings },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <div
+                  key={tab.id}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+                    isActive ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-brand-700' : 'text-slate-400'}`} />
+                  <span>{tab.label}</span>
+                </div>
+              );
+            })}
           </nav>
         </div>
 
-        {/* Sidebar Footer Profile widget */}
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#f0fdfa', color: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
-              {db.user_profile.name[0]?.toUpperCase() || 'U'}
+        {/* Profile and Signout panel */}
+        <div className="border-t border-slate-200 pt-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">
+              {(db.user_profile?.name?.[0] || 'U').toUpperCase()}
             </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{db.user_profile.name}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Lvl {db.user_profile.level} Student</div>
+            <div className="overflow-hidden">
+              <div className="text-sm font-bold text-slate-900 truncate">{db.user_profile?.name}</div>
+              <div className="text-xs text-slate-500">Lvl {db.user_profile?.level} Student</div>
             </div>
           </div>
-          <button className="btn" style={{ fontSize: '11px', padding: '4px 8px', width: '100%' }} onClick={logout}>Sign Out</button>
+          <button
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            onClick={logout}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign Out
+          </button>
         </div>
       </aside>
 
       {/* ================= MAIN CONTENT SPACE ================= */}
-      <main className="main-content">
-        <header className="main-header">
-          <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
-              {activeTab === 'dashboard' && '📈 Student Dashboard'}
-              {activeTab === 'calendar' && '📅 182-Day Curriculum Tracker'}
-              {activeTab === 'qbank' && '💻 Coding & Concept Banks'}
-              {activeTab === 'projects' && '🚀 Portfolio Megaprojects'}
-              {activeTab === 'cheatsheets' && '📝 Developer Cheat Sheets'}
-              {activeTab === 'admin' && '🛡️ Administrator Control Center'}
-              {activeTab === 'settings' && '⚙️ Configuration & Settings'}
-            </h2>
-          </div>
+      <main className="flex-1 ml-64 p-8 min-h-screen">
+        <header className="flex justify-between items-center border-b border-slate-200 pb-6 mb-8">
+          <h2 className="text-2xl font-black text-slate-900">
+            {activeTab === 'dashboard' && '📈 Student Dashboard'}
+            {activeTab === 'calendar' && '📅 182-Day Curriculum Tracker'}
+            {activeTab === 'qbank' && '💻 Coding & Concept Banks'}
+            {activeTab === 'projects' && '🚀 Portfolio Megaprojects'}
+            {activeTab === 'cheatsheets' && '📝 Developer Cheat Sheets'}
+            {activeTab === 'admin' && '🛡️ Administrator Control Center'}
+            {activeTab === 'settings' && '⚙️ Configuration & Settings'}
+          </h2>
 
-          {/* Gamification Header Metrics */}
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--accent-indigo)' }}>
-              <span>⚡ {db.user_profile.xp} XP</span>
+          {/* Streaks Widget */}
+          <div className="flex gap-4">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 text-brand-700 rounded-full text-xs font-bold border border-brand-100">
+              <Zap className="h-3.5 w-3.5 text-brand-600 fill-brand-600" />
+              <span>{db.user_profile?.xp} XP</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#f59e0b' }}>
-              <span>🔥 {db.user_profile.current_streak} Day Streak (Best: {db.user_profile.best_streak})</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full text-xs font-bold border border-amber-100">
+              <Flame className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <span>{db.user_profile?.current_streak} Day Streak (Best: {db.user_profile?.best_streak})</span>
             </div>
           </div>
         </header>
 
         {/* ================= VIEW 1: DASHBOARD ================= */}
         {activeTab === 'dashboard' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
+          <div className="space-y-8">
             {/* Overview Stats Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-              <div className="stat-card">
-                <span className="stat-label">Level</span>
-                <span className="stat-value" style={{ color: 'var(--accent-indigo)' }}>{db.user_profile.level}</span>
-                <span className="stat-desc">Next level in {((db.user_profile.level) * 100) - db.user_profile.xp} XP</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Level</span>
+                <span className="text-3xl font-extrabold text-brand-600 mt-2">{db.user_profile?.level}</span>
+                <span className="text-xs text-slate-500 mt-2">Next level in {((db.user_profile?.level || 1) * 100) - (db.user_profile?.xp || 0)} XP</span>
               </div>
-              <div className="stat-card">
-                <span className="stat-label">Completed Days</span>
-                <span className="stat-value">{db.calendar.filter(d => d.completed).length} / 182</span>
-                <span className="stat-desc">{Math.round((db.calendar.filter(d => d.completed).length / 182) * 100)}% of curriculum finished</span>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed Days</span>
+                <span className="text-3xl font-extrabold text-slate-900 mt-2">{db.calendar.filter(d => d.completed).length} / 182</span>
+                <span className="text-xs text-slate-500 mt-2">{Math.round((db.calendar.filter(d => d.completed).length / 182) * 100)}% of curriculum finished</span>
               </div>
-              <div className="stat-card">
-                <span className="stat-label">Solved Problems</span>
-                <span className="stat-value">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Solved Problems</span>
+                <span className="text-3xl font-extrabold text-slate-900 mt-2">
                   {getQuestionList('sql').filter(q => q.solved).length + getQuestionList('dsa').filter(q => q.solved).length}
                 </span>
-                <span className="stat-desc">SQL: {getQuestionList('sql').filter(q => q.solved).length} | DSA: {getQuestionList('dsa').filter(q => q.solved).length}</span>
+                <span className="text-xs text-slate-500 mt-2">SQL: {getQuestionList('sql').filter(q => q.solved).length} | DSA: {getQuestionList('dsa').filter(q => q.solved).length}</span>
               </div>
             </div>
 
             {/* Target Goal Panel */}
-            <div className="schedule-browser" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>🎯 Target Career Objective</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                <strong>Role:</strong> {db.user_profile.goal || 'Not specified (go to Settings)'}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-3 mb-4">🎯 Target Career Objective</h3>
+              <p className="text-sm text-slate-700">
+                <strong>Target Role:</strong> {db.user_profile?.goal || 'Not specified (go to Settings)'}
               </p>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                <strong>Target Companies:</strong> {db.user_profile.target_companies.join(', ') || 'Not specified'}
+              <p className="text-sm text-slate-700 mt-2">
+                <strong>Companies Focus:</strong> {db.user_profile?.target_companies?.join(', ') || 'Not specified'}
               </p>
             </div>
 
             {/* Today's Agenda Panel */}
-            <div className="schedule-browser" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '12px' }}>
-                📅 Today's Agenda (Day {db.calendar.findIndex(d => !d.completed) + 1})
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-4 mb-4 flex items-center gap-2">
+                <Calendar className="text-brand-600 h-5 w-5" />
+                Today's Agenda (Day {db.calendar.findIndex(d => !d.completed) + 1})
               </h3>
               {(() => {
                 const todayIndex = db.calendar.findIndex(d => !d.completed);
                 const today = todayIndex !== -1 ? db.calendar[todayIndex] : db.calendar[0];
-                if (!today) return <span>Complete! All days finished.</span>;
+                if (!today) return <span className="text-slate-500 text-sm">All days finished! Excellent job.</span>;
 
                 return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--accent-indigo)' }}>
-                      Topic: {today.topic}
+                  <div className="space-y-4">
+                    <div className="text-sm font-semibold text-brand-700 bg-brand-50/50 px-3 py-1 rounded-md inline-block">
+                      Day Topic: {today.topic}
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                    <div className="space-y-3 pt-2">
+                      <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer select-none">
                         <input
                           type="checkbox"
+                          className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={today.morning_completed}
                           onChange={() => toggleCalendarTask(today.day_number, 'morning_completed')}
                         />
                         <span>🌅 Morning Task: {today.morning_task}</span>
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                      <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer select-none">
                         <input
                           type="checkbox"
+                          className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={today.afternoon_completed}
                           onChange={() => toggleCalendarTask(today.day_number, 'afternoon_completed')}
                         />
                         <span>☀️ Afternoon Task: {today.afternoon_task}</span>
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                      <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer select-none">
                         <input
                           type="checkbox"
+                          className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={today.evening_completed}
                           onChange={() => toggleCalendarTask(today.day_number, 'evening_completed')}
                         />
@@ -1174,7 +1155,11 @@ export default function App() {
                       </label>
                     </div>
 
-                    <button className="btn btn-primary" onClick={() => setSelectedDay(today)} style={{ alignSelf: 'flex-start', marginTop: '4px' }}>
+                    <button
+                      className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg transition-colors text-xs mt-4 flex items-center gap-2"
+                      onClick={() => setSelectedDay(today)}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
                       Add Study Minutes & Reflections
                     </button>
                   </div>
@@ -1186,21 +1171,29 @@ export default function App() {
 
         {/* ================= VIEW 2: 182-DAY CALENDAR ================= */}
         {activeTab === 'calendar' && (
-          <div className="days-grid">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-9 gap-4">
             {db.calendar.map(day => (
               <div
                 key={day.day_number}
-                className={`day-card ${day.completed ? 'completed' : ''} ${day.penalized ? 'penalized' : ''}`}
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between h-24 shadow-sm hover:border-brand-500 hover:shadow-md ${
+                  day.completed ? 'bg-teal-50/50 border-teal-200' : (day.penalized ? 'bg-red-50/50 border-red-200' : 'bg-white border-slate-200')
+                }`}
                 onClick={() => setSelectedDay(day)}
               >
-                <span className="day-number">Day {day.day_number}</span>
-                <span className="day-title" style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="flex justify-between items-start">
+                  <span className="text-[10px] font-bold text-slate-400">Day {day.day_number}</span>
+                  {day.completed && <Check className="text-teal-600 h-3.5 w-3.5 font-black" />}
+                  {day.penalized && <AlertTriangle className="text-red-500 h-3.5 w-3.5" />}
+                </div>
+                
+                <span className="text-xs font-bold text-slate-700 line-clamp-2 mt-1">
                   {day.topic}
                 </span>
-                <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-                  <span style={{ fontSize: '8px', color: day.morning_completed ? 'var(--accent-indigo)' : '#cbd5e1' }}>🌅</span>
-                  <span style={{ fontSize: '8px', color: day.afternoon_completed ? 'var(--accent-indigo)' : '#cbd5e1' }}>☀️</span>
-                  <span style={{ fontSize: '8px', color: day.evening_completed ? 'var(--accent-indigo)' : '#cbd5e1' }}>🌙</span>
+
+                <div className="flex gap-1.5 mt-2">
+                  <span className={`w-1.5 h-1.5 rounded-full ${day.morning_completed ? 'bg-brand-500' : 'bg-slate-200'}`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${day.afternoon_completed ? 'bg-brand-500' : 'bg-slate-200'}`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${day.evening_completed ? 'bg-brand-500' : 'bg-slate-200'}`}></span>
                 </div>
               </div>
             ))}
@@ -1209,57 +1202,45 @@ export default function App() {
 
         {/* ================= VIEW 3: QUESTION BANKS ================= */}
         {activeTab === 'qbank' && (
-          <div className="schedule-layout">
+          <div className="flex gap-8">
             
-            {/* Left sidebar bank category picker */}
-            <div className="schedule-sidebar">
-              <div
-                className={`schedule-sidebar-item ${activeQBankTab === 'sql' ? 'active' : ''}`}
-                onClick={() => setActiveQBankTab('sql')}
-              >
-                💾 SQL Coding Questions
-              </div>
-              <div
-                className={`schedule-sidebar-item ${activeQBankTab === 'dsa' ? 'active' : ''}`}
-                onClick={() => setActiveQBankTab('dsa')}
-              >
-                🧩 DSA Algorithms
-              </div>
-              <div
-                className={`schedule-sidebar-item ${activeQBankTab === 'pyspark' ? 'active' : ''}`}
-                onClick={() => setActiveQBankTab('pyspark')}
-              >
-                📊 PySpark Big Data
-              </div>
-              <div
-                className={`schedule-sidebar-item ${activeQBankTab === 'concepts' ? 'active' : ''}`}
-                onClick={() => setActiveQBankTab('concepts')}
-              >
-                📚 Core DE Concepts
-              </div>
-              <div
-                className={`schedule-sidebar-item ${activeQBankTab === 'interview' ? 'active' : ''}`}
-                onClick={() => setActiveQBankTab('interview')}
-              >
-                🎙️ Scenario Interviews
-              </div>
+            {/* Left Bank Picker */}
+            <div className="w-60 flex flex-col gap-1.5 flex-shrink-0">
+              {[
+                { id: 'sql', label: '💾 SQL Coding' },
+                { id: 'dsa', label: '🧩 DSA Algorithms' },
+                { id: 'pyspark', label: '📊 PySpark Big Data' },
+                { id: 'concepts', label: '📚 Core DE Concepts' },
+                { id: 'interview', label: '🎙️ Scenario Interviews' },
+              ].map(sub => (
+                <div
+                  key={sub.id}
+                  className={`px-4 py-3 rounded-xl text-sm font-bold cursor-pointer transition-colors ${
+                    activeQBankTab === sub.id ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  onClick={() => setActiveQBankTab(sub.id)}
+                >
+                  {sub.label}
+                </div>
+              ))}
             </div>
 
-            {/* Right side QBank list pane */}
-            <div className="schedule-browser">
-              {/* Search and Filters row */}
-              <div className="qbank-filters">
-                <input
-                  type="text"
-                  placeholder="Search questions or patterns..."
-                  className="input-field"
-                  style={{ flex: 2 }}
-                  value={qbankFilters.search}
-                  onChange={e => setQbankFilters({ ...qbankFilters, search: e.target.value })}
-                />
+            {/* Right List Grid */}
+            <div className="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 overflow-hidden">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search question, tags, patterns..."
+                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
+                    value={qbankFilters.search}
+                    onChange={e => setQbankFilters({ ...qbankFilters, search: e.target.value })}
+                  />
+                </div>
                 
                 <select
-                  className="input-field"
+                  className="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm bg-white"
                   value={qbankFilters.difficulty}
                   onChange={e => setQbankFilters({ ...qbankFilters, difficulty: e.target.value })}
                 >
@@ -1270,7 +1251,7 @@ export default function App() {
                 </select>
 
                 <select
-                  className="input-field"
+                  className="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm bg-white"
                   value={qbankFilters.status}
                   onChange={e => setQbankFilters({ ...qbankFilters, status: e.target.value })}
                 >
@@ -1281,63 +1262,67 @@ export default function App() {
               </div>
 
               {/* Data Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <th style={{ padding: '10px' }}>ID</th>
-                    <th style={{ padding: '10px' }}>Problem</th>
-                    <th style={{ padding: '10px' }}>Category</th>
-                    {activeQBankTab === 'sql' && <th style={{ padding: '10px' }}>Topic</th>}
-                    {activeQBankTab === 'dsa' && <th style={{ padding: '10px' }}>Pattern</th>}
-                    {(activeQBankTab === 'sql' || activeQBankTab === 'dsa') && <th style={{ padding: '10px' }}>Difficulty</th>}
-                    <th style={{ padding: '10px' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredQBankList.map(item => (
-                    <tr
-                      key={item.id}
-                      onClick={() => {
-                        setSelectedQuestion(item);
-                        setSelectedQuestionCategory(activeQBankTab);
-                        setWorkspaceCode(item.solution_code || '');
-                        setWorkspaceNotes(item.notes || '');
-                        setWorkspaceTab('code');
-                        setAiSubTab('schema');
-                      }}
-                      style={{ cursor: 'pointer', borderBottom: '1px solid var(--border-color)', fontSize: '13px' }}
-                      className="qrow"
-                    >
-                      <td style={{ padding: '12px 10px' }}>#{item.id}</td>
-                      <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{item.question || item.title}</td>
-                      <td style={{ padding: '12px 10px' }}>{item.category}</td>
-                      {activeQBankTab === 'sql' && <td style={{ padding: '12px 10px' }}><code>{item.topic}</code></td>}
-                      {activeQBankTab === 'dsa' && <td style={{ padding: '12px 10px' }}>{item.pattern}</td>}
-                      {(activeQBankTab === 'sql' || activeQBankTab === 'dsa') && (
-                        <td style={{ padding: '12px 10px' }}>
-                          <span className={`difficulty-label ${(item.difficulty || '').toLowerCase()}`}>
-                            {item.difficulty}
-                          </span>
-                        </td>
-                      )}
-                      <td style={{ padding: '12px 10px' }}>
-                        {item.solved ? (
-                          <span className="badge badge-success">✓ Solved</span>
-                        ) : (
-                          <span className="badge badge-gray">Unsolved</span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="pb-3 text-center w-12">ID</th>
+                      <th className="pb-3">Problem</th>
+                      <th className="pb-3">Category</th>
+                      {activeQBankTab === 'sql' && <th className="pb-3">Topic</th>}
+                      {activeQBankTab === 'dsa' && <th className="pb-3">Pattern</th>}
+                      {(activeQBankTab === 'sql' || activeQBankTab === 'dsa') && <th className="pb-3">Difficulty</th>}
+                      <th className="pb-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredQBankList.map(item => (
+                      <tr
+                        key={item.id}
+                        onClick={() => {
+                          setSelectedQuestion(item);
+                          setSelectedQuestionCategory(activeQBankTab);
+                          setWorkspaceCode(item.solution_code || '');
+                          setWorkspaceNotes(item.notes || '');
+                          setWorkspaceTab('code');
+                          setAiSubTab('schema');
+                        }}
+                        className="border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer text-sm font-main"
+                      >
+                        <td className="py-4 text-center text-slate-400">#{item.id}</td>
+                        <td className="py-4 font-bold text-slate-800">{item.question || item.title}</td>
+                        <td className="py-4 text-slate-600">{item.category}</td>
+                        {activeQBankTab === 'sql' && <td className="py-4"><code className="font-code text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-700">{item.topic}</code></td>}
+                        {activeQBankTab === 'dsa' && <td className="py-4 text-slate-600">{item.pattern}</td>}
+                        {(activeQBankTab === 'sql' || activeQBankTab === 'dsa') && (
+                          <td className="py-4">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              (item.difficulty || '').toLowerCase() === 'easy' ? 'bg-emerald-50 text-emerald-700' :
+                              ((item.difficulty || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700')
+                            }`}>
+                              {item.difficulty}
+                            </span>
+                          </td>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredQBankList.length === 0 && (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)' }}>
-                        No questions match the active search or filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                        <td className="py-4">
+                          {item.solved ? (
+                            <span className="text-[10px] font-bold bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">✓ Solved</span>
+                          ) : (
+                            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Unsolved</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredQBankList.length === 0 && (
+                      <tr>
+                        <td colSpan="7" className="text-center py-10 text-slate-400 text-sm">
+                          No questions match current search filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
             </div>
           </div>
@@ -1345,20 +1330,21 @@ export default function App() {
 
         {/* ================= VIEW 4: MEGAPROJECTS ================= */}
         {activeTab === 'projects' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="space-y-6">
             {db.projects.map(proj => (
-              <div key={`${proj.name}-${proj.week}`} className="schedule-browser" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={`${proj.name}-${proj.week}`} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex justify-between items-start">
                   <div>
-                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-indigo)', textTransform: 'uppercase' }}>
+                    <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded-full">
                       Month {Math.ceil(proj.week / 4)} | Week {proj.week}
                     </span>
-                    <h3 style={{ fontSize: '16px', fontWeight: 800 }}>{proj.name}</h3>
+                    <h3 className="text-lg font-black text-slate-800 mt-2">{proj.name}</h3>
                   </div>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer select-none">
                     <input
                       type="checkbox"
+                      className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                       checked={proj.completed || false}
                       onChange={e => toggleProject(proj.name, proj.week, e.target.checked)}
                     />
@@ -1366,24 +1352,24 @@ export default function App() {
                   </label>
                 </div>
 
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{proj.description}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">{proj.description}</p>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '8px' }}>
-                  <div className="workspace-section">
-                    <label className="workspace-label">GitHub Repository URL</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">GitHub Repository URL</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                       placeholder="https://github.com/username/project"
                       value={proj.github_url || ''}
                       onChange={e => updateProjectFields(proj.name, proj.week, { github_url: e.target.value })}
                     />
                   </div>
-                  <div className="workspace-section">
-                    <label className="workspace-label">Duration (Hours Spent)</label>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Duration (Hours Spent)</label>
                     <input
                       type="number"
-                      className="input-field"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                       min="0"
                       value={proj.time_spent_hours || 0}
                       onChange={e => updateProjectFields(proj.name, proj.week, { time_spent_hours: parseInt(e.target.value) || 0 })}
@@ -1391,11 +1377,10 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="workspace-section">
-                  <label className="workspace-label">Development Notes & Architecture doubts</label>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Development Notes & Architecture doubts</label>
                   <textarea
-                    className="input-field"
-                    style={{ minHeight: '60px', fontFamily: 'inherit' }}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm min-h-[60px]"
                     value={proj.notes || ''}
                     placeholder="Write project highlights, pipelines, Spark configurations or problems encountered..."
                     onChange={e => updateProjectFields(proj.name, proj.week, { notes: e.target.value })}
@@ -1408,17 +1393,16 @@ export default function App() {
 
         {/* ================= VIEW 5: CHEAT SHEETS ================= */}
         {activeTab === 'cheatsheets' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="space-y-6">
             {Object.keys(db.cheat_sheets).map(key => {
               const sheet = db.cheat_sheets[key];
               return (
-                <div key={key} className="schedule-browser" style={{ padding: '20px' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px', color: 'var(--accent-indigo)' }}>
+                <div key={key} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="text-base font-extrabold text-brand-700 mb-3">
                     📝 {sheet.title} Syntax Checklist
                   </h3>
                   <textarea
-                    className="input-field"
-                    style={{ minHeight: '200px', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.6' }}
+                    className="w-full p-4 border border-slate-200 rounded-xl font-code text-xs leading-relaxed focus:outline-none focus:border-brand-500 min-h-[220px]"
                     value={sheet.content || ''}
                     onChange={e => {
                       const updatedSheets = { ...db.cheat_sheets };
@@ -1438,107 +1422,121 @@ export default function App() {
         {activeTab === 'admin' && (
           <div>
             {!adminAuthenticated ? (
-              <div className="schedule-browser" style={{ padding: '40px', maxWidth: '400px', margin: '40px auto', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>🛡️ Admin Gateway</h3>
-                <form onSubmit={handleAdminVerify} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm max-w-sm mx-auto text-center mt-12 space-y-4">
+                <h3 className="text-lg font-black text-slate-800 flex items-center justify-center gap-2">
+                  <Lock className="text-brand-600 h-5 w-5" />
+                  Admin Gateway
+                </h3>
+                <form onSubmit={handleAdminVerify} className="space-y-3">
                   <input
                     type="password"
                     placeholder="Enter Admin PIN"
-                    className="input-field"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm text-center"
                     value={adminPinInput}
                     onChange={e => setAdminPinInput(e.target.value)}
                   />
-                  <button type="submit" className="btn btn-primary">Verify Access</button>
+                  <button type="submit" className="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg text-sm transition-colors">
+                    Verify Access
+                  </button>
                 </form>
               </div>
             ) : (
-              <div className="schedule-layout">
-                {/* Admin user sidebar directory */}
-                <div className="schedule-sidebar" style={{ width: '300px' }}>
-                  <input
-                    type="text"
-                    placeholder="Search users..."
-                    className="input-field"
-                    style={{ marginBottom: '12px' }}
-                    value={adminSearch}
-                    onChange={e => setAdminSearch(e.target.value)}
-                  />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '400px' }}>
+              <div className="flex gap-6">
+                
+                {/* Sidebar directories */}
+                <div className="w-72 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 flex-shrink-0 h-[80vh] overflow-y-auto">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search users..."
+                      className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
+                      value={adminSearch}
+                      onChange={e => setAdminSearch(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1 overflow-y-auto flex-1">
                     {adminUsers
                       .filter(u => u.name.toLowerCase().includes(adminSearch.toLowerCase()) || u.email.toLowerCase().includes(adminSearch.toLowerCase()))
                       .map(u => (
                         <div
                           key={u.id}
-                          className={`schedule-sidebar-item ${adminSelectedUser?.id === u.id ? 'active' : ''}`}
+                          className={`p-3 rounded-lg text-xs font-semibold cursor-pointer transition-all flex justify-between items-center ${
+                            adminSelectedUser?.id === u.id ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'
+                          }`}
                           onClick={() => selectUserAdminInspect(u)}
-                          style={{ padding: '10px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                         >
                           <div>
-                            <div style={{ fontWeight: 'bold' }}>{u.name}</div>
-                            <div style={{ fontSize: '10px', opacity: 0.8 }}>{u.email}</div>
+                            <div className="font-bold">{u.name}</div>
+                            <div className="text-[10px] opacity-80 mt-0.5">{u.email}</div>
                           </div>
                           <button
-                            className="btn btn-danger"
-                            style={{ padding: '2px 6px', fontSize: '10px' }}
+                            className="py-1 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md text-[10px] font-bold"
                             onClick={e => {
                               e.stopPropagation();
                               deleteUserAccount(u.id, u.name);
                             }}
                           >
-                            Delete
+                            Wipe
                           </button>
                         </div>
                       ))}
                   </div>
                 </div>
 
-                {/* Admin user detail pane */}
-                <div className="schedule-browser">
+                {/* Main Inspector Pane */}
+                <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 h-[80vh] overflow-y-auto">
                   {adminSelectedUser ? (
-                    <div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 800, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                        👤 Inspecting Student: {adminSelectedUser.name}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-black text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <User className="text-brand-600 h-5 w-5" />
+                        Student details: {adminSelectedUser.name}
                       </h3>
                       
-                      <div className="qbank-filters" style={{ margin: '12px 0' }}>
-                        <button className={`btn ${adminInspectTab === 'overview' ? 'btn-primary' : ''}`} onClick={() => setAdminInspectTab('overview')}>Overview</button>
-                        <button className={`btn ${adminInspectTab === 'calendar' ? 'btn-primary' : ''}`} onClick={() => setAdminInspectTab('calendar')}>Calendar Grid</button>
-                        <button className={`btn ${adminInspectTab === 'code' ? 'btn-primary' : ''}`} onClick={() => setAdminInspectTab('code')}>Code Editor Inspector</button>
+                      <div className="flex gap-2 border-b border-slate-100 pb-3">
+                        {['overview', 'calendar', 'code'].map(t => (
+                          <button
+                            key={t}
+                            className={`py-1.5 px-3 rounded-lg text-xs font-bold capitalize transition-colors ${
+                              adminInspectTab === t ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                            onClick={() => setAdminInspectTab(t)}
+                          >
+                            {t}
+                          </button>
+                        ))}
                       </div>
 
-                      {/* Admin Tab 1: Overview stats */}
+                      {/* Admin Tab 1: Overview */}
                       {adminInspectTab === 'overview' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                          <div className="stat-card">
-                            <span className="stat-label">Level / XP</span>
-                            <span className="stat-value">Lvl {adminSelectedUser.level}</span>
-                            <span className="stat-desc">{adminSelectedUser.xp} total XP accumulated</span>
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Level & XP</span>
+                            <span className="text-2xl font-black text-slate-800 mt-1 block">Level {adminSelectedUser.level}</span>
+                            <span className="text-xs text-slate-500 mt-1 block">{adminSelectedUser.xp} accumulated XP</span>
                           </div>
-                          <div className="stat-card">
-                            <span className="stat-label">Streaks</span>
-                            <span className="stat-value">{adminSelectedUser.current_streak} days</span>
-                            <span className="stat-desc">Best streak: {adminSelectedUser.best_streak} days</span>
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Daily Streaks</span>
+                            <span className="text-2xl font-black text-slate-800 mt-1 block">{adminSelectedUser.current_streak} Days</span>
+                            <span className="text-xs text-slate-500 mt-1 block">Best streak: {adminSelectedUser.best_streak} Days</span>
                           </div>
                         </div>
                       )}
 
-                      {/* Admin Tab 2: Calendar tracker */}
+                      {/* Admin Tab 2: Calendar */}
                       {adminInspectTab === 'calendar' && adminSelectedUserProgress && (
-                        <div>
-                          <div className="days-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(45px, 1fr))' }}>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-10 gap-2">
                             {adminSelectedUserProgress.calendar.map(day => (
                               <div
                                 key={day.day_number}
                                 onClick={() => setAdminInspectDay(day)}
-                                style={{
-                                  padding: '8px 4px',
-                                  fontSize: '10px',
-                                  textAlign: 'center',
-                                  backgroundColor: day.completed ? 'var(--accent-success-light)' : (day.penalized ? 'var(--accent-danger-light)' : '#f1f5f9'),
-                                  borderRadius: '6px',
-                                  cursor: 'pointer',
-                                  border: adminInspectDay?.day_number === day.day_number ? '2px solid var(--accent-indigo)' : 'none'
-                                }}
+                                className={`py-2 px-1 text-[10px] font-bold text-center rounded-lg cursor-pointer transition-all border ${
+                                  adminInspectDay?.day_number === day.day_number ? 'border-brand-500 ring-2 ring-brand-100' : 'border-transparent'
+                                } ${
+                                  day.completed ? 'bg-teal-100 text-teal-800' : (day.penalized ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600')
+                                }`}
                               >
                                 D{day.day_number}
                               </div>
@@ -1546,11 +1544,11 @@ export default function App() {
                           </div>
 
                           {adminInspectDay && (
-                            <div className="schedule-browser" style={{ marginTop: '16px', padding: '12px' }}>
-                              <h4>Day {adminInspectDay.day_number} Details</h4>
-                              <p><strong>Topic:</strong> {adminInspectDay.topic}</p>
-                              <p><strong>Study Duration:</strong> {adminInspectDay.time_spent_minutes} minutes</p>
-                              <p><strong>Reflections / Notes:</strong> {adminInspectDay.notes || 'No reflections written'}</p>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                              <h4 className="text-sm font-bold text-slate-800">Day {adminInspectDay.day_number} Logs</h4>
+                              <p className="text-xs text-slate-600"><strong>Curriculum Topic:</strong> {adminInspectDay.topic}</p>
+                              <p className="text-xs text-slate-600"><strong>Study Time logged:</strong> {adminInspectDay.time_spent_minutes} mins</p>
+                              <p className="text-xs text-slate-600"><strong>Student Reflections:</strong> {adminInspectDay.notes || 'None written.'}</p>
                             </div>
                           )}
                         </div>
@@ -1558,23 +1556,28 @@ export default function App() {
 
                       {/* Admin Tab 3: Code solutions */}
                       {adminInspectTab === 'code' && adminSelectedUserProgress && (
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                          <div style={{ width: '220px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <select className="input-field" value={adminInspectCategory} onChange={e => setAdminInspectCategory(e.target.value)}>
+                        <div className="flex gap-6">
+                          <div className="w-56 space-y-3 flex-shrink-0">
+                            <select
+                              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-xs bg-white"
+                              value={adminInspectCategory}
+                              onChange={e => setAdminInspectCategory(e.target.value)}
+                            >
                               <option value="sql">SQL Coding</option>
                               <option value="dsa">DSA Algorithmic</option>
                               <option value="pyspark">PySpark</option>
                             </select>
 
-                            <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div className="space-y-1 overflow-y-auto max-h-[300px] border border-slate-100 rounded-xl p-2 bg-slate-50">
                               {adminSelectedUserProgress[`${adminInspectCategory === 'sql' ? 'sql_question_bank' : (adminInspectCategory === 'dsa' ? 'dsa_problems' : 'pyspark_questions')}`]
                                 .filter(q => q.solved)
                                 .map(q => (
                                   <div
                                     key={q.id}
                                     onClick={() => setAdminInspectQId(q.id)}
-                                    className={`schedule-sidebar-item ${adminInspectQId === q.id ? 'active' : ''}`}
-                                    style={{ fontSize: '11px', padding: '6px' }}
+                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                                      adminInspectQId === q.id ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'
+                                    }`}
                                   >
                                     #{q.id} {q.question || q.title}
                                   </div>
@@ -1582,19 +1585,19 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div style={{ flex: 1 }}>
+                          <div className="flex-1">
                             {(() => {
-                              const qList = adminSelectedUserProgress[`${adminInspectCategory === 'sql' ? 'sql_question_bank' : (adminInspectCategory === 'dsa' ? 'dsa_problems' : 'pyspark_questions')}`];
-                              const q = qList.find(item => item.id === adminInspectQId);
-                              if (!q) return <span style={{ color: 'var(--text-tertiary)' }}>Select a solved question to inspect code.</span>;
+                              const list = adminSelectedUserProgress[`${adminInspectCategory === 'sql' ? 'sql_question_bank' : (adminInspectCategory === 'dsa' ? 'dsa_problems' : 'pyspark_questions')}`];
+                              const q = list.find(item => item.id === adminInspectQId);
+                              if (!q) return <span className="text-slate-400 text-xs">Select a solved question to inspect their workspace.</span>;
 
                               return (
-                                <div>
-                                  <h4 style={{ fontSize: '13px', fontWeight: 'bold' }}>{q.question || q.title}</h4>
-                                  <pre style={{ backgroundColor: '#0f172a', color: '#e2e8f0', padding: '12px', borderRadius: '8px', fontSize: '12px', fontFamily: 'monospace', overflowX: 'auto', marginTop: '8px' }}>
+                                <div className="space-y-3">
+                                  <h4 className="text-sm font-bold text-slate-800">#{q.id} {q.question || q.title}</h4>
+                                  <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl font-code text-xs overflow-x-auto max-h-[250px]">
                                     <code>{q.solution_code || 'No solution code submitted.'}</code>
                                   </pre>
-                                  <div style={{ marginTop: '8px', fontSize: '12px' }}>
+                                  <div className="text-xs text-slate-600">
                                     <strong>Personal Notes:</strong> {q.notes || 'None written.'}
                                   </div>
                                 </div>
@@ -1606,7 +1609,7 @@ export default function App() {
 
                     </div>
                   ) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
+                    <div className="text-center py-20 text-slate-400 text-sm">
                       Select a student directory account to inspect complete dashboard metrics.
                     </div>
                   )}
@@ -1618,18 +1621,18 @@ export default function App() {
 
         {/* ================= VIEW 7: SETTINGS ================= */}
         {activeTab === 'settings' && (
-          <div className="schedule-layout" style={{ gridTemplateColumns: '1fr 1fr' }}>
-            <div className="schedule-browser" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '12px' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3">
                 👤 Edit Student Profile
               </h3>
               
-              <div className="workspace-section">
-                <label className="workspace-label">Full Name</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Full Name</label>
                 <input
                   type="text"
-                  className="input-field"
-                  value={db.user_profile.name}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
+                  value={db.user_profile?.name}
                   onChange={e => {
                     const profile = { ...db.user_profile, name: e.target.value };
                     setDb(prev => ({ ...prev, user_profile: profile }));
@@ -1638,23 +1641,22 @@ export default function App() {
                 />
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Email Address</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Email Address</label>
                 <input
                   type="email"
-                  className="input-field"
-                  value={db.user_profile.email}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-100 text-slate-500 cursor-not-allowed"
+                  value={db.user_profile?.email}
                   disabled
-                  style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
                 />
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Career Target Goal</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Career Target Goal</label>
                 <input
                   type="text"
-                  className="input-field"
-                  value={db.user_profile.goal}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
+                  value={db.user_profile?.goal}
                   onChange={e => {
                     const profile = { ...db.user_profile, goal: e.target.value };
                     setDb(prev => ({ ...prev, user_profile: profile }));
@@ -1663,12 +1665,12 @@ export default function App() {
                 />
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Target Companies (Comma separated)</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Target Companies (Comma separated)</label>
                 <input
                   type="text"
-                  className="input-field"
-                  value={db.user_profile.target_companies.join(', ')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
+                  value={db.user_profile?.target_companies?.join(', ')}
                   onChange={e => {
                     const profile = { ...db.user_profile, target_companies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) };
                     setDb(prev => ({ ...prev, user_profile: profile }));
@@ -1677,14 +1679,14 @@ export default function App() {
                 />
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Daily Study Target (Hours)</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Daily Study Target (Hours)</label>
                 <input
                   type="number"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   min="1"
                   max="24"
-                  value={db.user_profile.daily_study_hours}
+                  value={db.user_profile?.daily_study_hours}
                   onChange={e => {
                     const profile = { ...db.user_profile, daily_study_hours: parseInt(e.target.value) || 5 };
                     setDb(prev => ({ ...prev, user_profile: profile }));
@@ -1693,27 +1695,27 @@ export default function App() {
                 />
               </div>
 
-              <div className="workspace-section" style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '16px', marginTop: '12px' }}>
-                <label className="workspace-label" style={{ color: 'var(--accent-indigo)' }}>🤖 Gemini API Key</label>
+              <div className="border-t border-slate-100 pt-4 mt-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1 text-brand-600">🤖 Gemini API Key</label>
                 <input
                   type="password"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   placeholder="Paste your Gemini key here"
-                  value={db.user_profile.gemini_api_key}
+                  value={db.user_profile?.gemini_api_key}
                   onChange={e => {
                     const profile = { ...db.user_profile, gemini_api_key: e.target.value };
                     setDb(prev => ({ ...prev, user_profile: profile }));
                     syncProfile(profile);
                   }}
                 />
-                <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Needed for AI Coach reviewing, grading code, and custom doubts.</span>
+                <span className="text-[10px] text-slate-400 mt-1 block">Needed for AI Coach reviewing, grading code, and custom doubts.</span>
               </div>
 
-              <div className="workspace-section" style={{ marginTop: '12px' }}>
-                <label className="workspace-label" style={{ color: '#0f766e' }}>🔗 Deployed Backend API URL</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1 text-teal-700">🔗 Deployed Backend API URL</label>
                 <input
                   type="text"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   placeholder="e.g. https://your-backend.onrender.com"
                   value={localStorage.getItem('de_tracker_backend_url') || ''}
                   onChange={e => {
@@ -1724,59 +1726,75 @@ export default function App() {
                     setTimeout(() => window.location.reload(), 1200);
                   }}
                 />
-                <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Leave blank for local environment. Reloads application on change.</span>
+                <span className="text-[10px] text-slate-400 mt-1 block">Leave blank for local environment. Reloads application on change.</span>
               </div>
             </div>
 
-            <div className="schedule-browser" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '12px' }}>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 h-fit">
+              <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3">
                 ⚙️ Reset Tracker State
               </h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <p className="text-xs text-slate-500 leading-relaxed">
                 If you wish to wipe all check-ins, custom notes, syntax sheets, streaks, levels, and solutions to start completely fresh from Day 1, execute this reset trigger.
               </p>
-              <button className="btn btn-danger" onClick={handleResetDatabase}>Wipe & Reset Database Progress</button>
+              <button
+                className="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors"
+                onClick={handleResetDatabase}
+              >
+                Wipe & Reset Database Progress
+              </button>
             </div>
           </div>
         )}
       </main>
 
-      {/* ================= MODAL 1: CALENDAR DAY DETAIL MODAL ================= */}
+      {/* ================= MODAL 1: CALENDAR DAY DETAIL DRAWER ================= */}
       {selectedDay && (
-        <div className="workspace-modal-overlay" style={{ display: 'flex' }} onClick={() => setSelectedDay(null)}>
-          <div className="workspace-modal-container" style={{ maxWidth: '550px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800 }}>📅 Day {selectedDay.day_number} Detail Config</h3>
-              <button style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }} onClick={() => setSelectedDay(null)}>✕</button>
+        <div
+          className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedDay(null)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h3 className="text-lg font-black text-slate-800">📅 Day {selectedDay.day_number} Detail Config</h3>
+              <button
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                onClick={() => setSelectedDay(null)}
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-              <div>
-                <strong>Curriculum Topic:</strong> <span style={{ color: 'var(--accent-indigo)' }}>{selectedDay.topic}</span>
+            <div className="space-y-4">
+              <div className="text-sm">
+                <strong>Curriculum Topic:</strong> <span className="text-brand-600 font-bold">{selectedDay.topic}</span>
               </div>
 
               {/* Task list quick display */}
-              <div style={{ padding: '10px', backgroundColor: 'var(--bg-app)', borderRadius: '8px', fontSize: '12px' }}>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs text-slate-600 leading-relaxed">
                 <div>🌅 <strong>Morning:</strong> {selectedDay.morning_task}</div>
-                <div style={{ margin: '4px 0' }}>☀️ <strong>Afternoon:</strong> {selectedDay.afternoon_task}</div>
+                <div>☀️ <strong>Afternoon:</strong> {selectedDay.afternoon_task}</div>
                 <div>🌙 <strong>Evening:</strong> {selectedDay.evening_task}</div>
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Study Duration Gained (Minutes)</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Study Duration Gained (Minutes)</label>
                 <input
                   type="number"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   min="0"
                   value={selectedDay.time_spent_minutes}
                   onChange={e => setSelectedDay({ ...selectedDay, time_spent_minutes: parseInt(e.target.value) || 0 })}
                 />
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Confidence Rating (1-5)</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Confidence Rating (1-5)</label>
                 <select
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm bg-white"
                   value={selectedDay.rating || ''}
                   onChange={e => setSelectedDay({ ...selectedDay, rating: parseInt(e.target.value) || null })}
                 >
@@ -1789,194 +1807,234 @@ export default function App() {
                 </select>
               </div>
 
-              <div className="workspace-section">
-                <label className="workspace-label">Daily reflections, notes or logical doubts</label>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Daily reflections, notes or logical doubts</label>
                 <textarea
-                  className="input-field"
-                  style={{ minHeight: '120px' }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm min-h-[100px]"
                   value={selectedDay.notes}
                   placeholder="What did you learn today? Edge cases? Notes on Spark jobs?"
                   onChange={e => setSelectedDay({ ...selectedDay, notes: e.target.value })}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                <button className="btn" onClick={() => setSelectedDay(null)}>Cancel</button>
-                <button className="btn btn-primary" onClick={saveDayDetails}>Save Details</button>
+              <div className="flex gap-2.5 justify-end border-t border-slate-100 pt-4">
+                <button
+                  className="py-2 px-4 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-bold text-slate-600 transition-colors"
+                  onClick={() => setSelectedDay(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors"
+                  onClick={saveDayDetails}
+                >
+                  Save Details
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ================= MODAL 2: QUESTION BANK WORKSPACE MODAL ================= */}
+      {/* ================= MODAL 2: QUESTION WORKSPACE MODAL ================= */}
       {selectedQuestion && (
-        <div className="workspace-modal-overlay" style={{ display: 'flex' }} onClick={() => setSelectedQuestion(null)}>
-          <div className="workspace-modal-container" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedQuestion(null)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Modal header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+            <div className="flex justify-between items-start border-b border-slate-200 p-6 bg-slate-50">
               <div>
-                <span className={`badge difficulty-label ${(selectedQuestion.difficulty || '').toLowerCase()}`}>
+                <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full ${
+                  (selectedQuestion.difficulty || '').toLowerCase() === 'easy' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                  ((selectedQuestion.difficulty || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-rose-50 text-rose-700 border border-rose-100')
+                }`}>
                   {selectedQuestion.difficulty || 'Concept'}
                 </span>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, marginTop: '4px' }}>
+                <h3 className="text-lg font-black text-slate-900 mt-2">
                   #{selectedQuestion.id} {selectedQuestion.question || selectedQuestion.title}
                 </h3>
               </div>
-              <button style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }} onClick={() => setSelectedQuestion(null)}>✕</button>
+              <button
+                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                onClick={() => setSelectedQuestion(null)}
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             {/* Split Pane Details layout */}
-            <div className="workspace-details-layout" style={{ marginTop: '16px' }}>
+            <div className="flex flex-1 overflow-hidden">
               
-              {/* Left pane: Question statement */}
-              <div className="workspace-question-pane">
-                <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Description</h4>
-                <div style={{ fontSize: '13px', lineHeight: '1.6', marginTop: '6px' }}>
+              {/* Left pane: Question description */}
+              <div className="w-1/2 p-6 overflow-y-auto border-r border-slate-200 space-y-4 bg-slate-50/50">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Question Details</h4>
+                <div className="text-sm text-slate-700 leading-relaxed font-main">
                   {selectedQuestion.description || selectedQuestion.question || "Core Data Engineering learning item. Write down your solution notes."}
                 </div>
 
                 {selectedQuestion.de_relevance && (
-                  <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#f0fdfa', borderRadius: '8px', borderLeft: '3px solid #0d9488' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#0f766e', textTransform: 'uppercase' }}>DE Relevance</span>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{selectedQuestion.de_relevance}</p>
+                  <div className="p-4 bg-teal-50/60 rounded-xl border border-teal-100 border-l-4 border-l-brand-600 space-y-1">
+                    <span className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">DE Relevance</span>
+                    <p className="text-xs text-slate-600 leading-relaxed">{selectedQuestion.de_relevance}</p>
                   </div>
                 )}
               </div>
 
-              {/* Right pane: Tabbed Workspace */}
-              <div className="workspace-editor-pane">
-                <div className="qbank-filters" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                  <button className={`btn ${workspaceTab === 'code' ? 'btn-primary' : ''}`} onClick={() => setWorkspaceTab('code')}>💻 Code Editor</button>
-                  <button className={`btn ${workspaceTab === 'notes' ? 'btn-primary' : ''}`} onClick={() => setWorkspaceTab('notes')}>📝 Notes & Doubts</button>
-                  <button className={`btn ${workspaceTab === 'coach' ? 'btn-primary' : ''}`} onClick={() => setWorkspaceTab('coach')}>🤖 AI Coach</button>
+              {/* Right pane: Tabs and editors */}
+              <div className="w-1/2 flex flex-col justify-between p-6 overflow-y-auto">
+                <div className="flex gap-1.5 border-b border-slate-200 pb-3 mb-4">
+                  {['code', 'notes', 'coach'].map(t => (
+                    <button
+                      key={t}
+                      className={`py-1.5 px-3.5 rounded-lg text-xs font-bold capitalize transition-colors ${
+                        workspaceTab === t ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                      onClick={() => setWorkspaceTab(t)}
+                    >
+                      {t === 'code' ? '💻 Editor' : (t === 'notes' ? '📝 Notes' : '🤖 AI Coach')}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Subtab 1: Code editor */}
                 {workspaceTab === 'code' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', marginTop: '12px' }}>
+                  <div className="flex-1 flex flex-col justify-between gap-4">
                     <textarea
-                      className="input-field"
-                      style={{
-                        flex: 1,
-                        minHeight: '280px',
-                        fontFamily: 'monospace',
-                        fontSize: '12px',
-                        backgroundColor: '#0f172a',
-                        color: '#e2e8f0',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        lineHeight: '1.5'
-                      }}
+                      className="w-full flex-1 p-4 bg-slate-900 text-slate-100 rounded-xl font-code text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500/20 max-h-[350px] min-h-[250px]"
                       value={workspaceCode}
                       onChange={e => setWorkspaceCode(e.target.value)}
                       placeholder={selectedQuestionCategory === 'sql' ? "-- Write your SQL query solution here..." : "# Write your Python/PySpark solution here..."}
                     />
 
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer select-none">
                         <input
                           type="checkbox"
+                          className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={selectedQuestion.solved || false}
                           onChange={e => handleSolveQuestion(e.target.checked)}
                         />
                         <span>Mark as Solved</span>
                       </label>
-                      <button className="btn btn-primary" onClick={() => handleSolveQuestion(true)}>Save Solution Code</button>
+                      <button
+                        className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center gap-2"
+                        onClick={() => handleSolveQuestion(true)}
+                      >
+                        <Save className="h-3.5 w-3.5" />
+                        Save Solution
+                      </button>
                     </div>
                   </div>
                 )}
 
-                {/* Subtab 2: Notes & doubts */}
+                {/* Subtab 2: Notes */}
                 {workspaceTab === 'notes' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', marginTop: '12px' }}>
+                  <div className="flex-1 flex flex-col justify-between gap-4">
                     <textarea
-                      className="input-field"
-                      style={{ flex: 1, minHeight: '280px', fontFamily: 'inherit', fontSize: '13px' }}
+                      className="w-full flex-1 p-4 border border-slate-200 rounded-xl font-main text-xs leading-relaxed focus:outline-none focus:border-brand-500 max-h-[350px] min-h-[250px]"
                       value={workspaceNotes}
                       onChange={e => setWorkspaceNotes(e.target.value)}
                       placeholder="Write your study notes, doubts, edge cases or alternative approaches..."
                     />
-                    <button className="btn btn-primary" style={{ alignSelf: 'flex-end' }} onClick={() => handleSolveQuestion(selectedQuestion.solved)}>Save Notes</button>
+                    <button
+                      className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors self-end"
+                      onClick={() => handleSolveQuestion(selectedQuestion.solved)}
+                    >
+                      Save Notes
+                    </button>
                   </div>
                 )}
 
-                {/* Subtab 3: Upgraded AI Coach */}
+                {/* Subtab 3: AI Coach */}
                 {workspaceTab === 'coach' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-                    <div className="qbank-filters" style={{ justifyContent: 'flex-start', borderBottom: '1px dashed var(--border-color)', paddingBottom: '6px' }}>
-                      <button className={`btn ${aiSubTab === 'schema' ? 'btn-primary' : ''}`} style={{ fontSize: '11px', padding: '4px 8px' }} onClick={() => setAiSubTab('schema')}>📊 Mock Tables & Schemas</button>
-                      <button className={`btn ${aiSubTab === 'hint' ? 'btn-primary' : ''}`} style={{ fontSize: '11px', padding: '4px 8px' }} onClick={() => setAiSubTab('hint')}>💡 Grade My Solution</button>
-                      <button className={`btn ${aiSubTab === 'chat' ? 'btn-primary' : ''}`} style={{ fontSize: '11px', padding: '4px 8px' }} onClick={() => setAiSubTab('chat')}>💬 Doubt Chat</button>
+                  <div className="flex-1 flex flex-col justify-between gap-4">
+                    <div className="flex gap-2 border-b border-slate-100 pb-2">
+                      {['schema', 'hint', 'chat'].map(t => (
+                        <button
+                          key={t}
+                          className={`py-1 px-2.5 rounded-lg text-[10px] font-bold capitalize transition-colors ${
+                            aiSubTab === t ? 'bg-slate-200 text-slate-800' : 'text-slate-500 hover:bg-slate-50'
+                          }`}
+                          onClick={() => setAiSubTab(t)}
+                        >
+                          {t === 'schema' ? '📊 Model Tables' : (t === 'hint' ? '💡 Grade Solution' : '💬 Chat doubts')}
+                        </button>
+                      ))}
                     </div>
 
-                    <div style={{
-                      minHeight: '220px',
-                      maxHeight: '300px',
-                      overflowY: 'auto',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      backgroundColor: '#fafafa',
-                      fontSize: '12px',
-                      lineHeight: '1.6'
-                    }}>
-                      
+                    <div className="flex-1 border border-slate-200 rounded-xl p-4 bg-slate-50 overflow-y-auto text-xs leading-relaxed max-h-[260px] min-h-[220px]">
                       {aiLoading && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', paddingTop: '40px' }}>
-                          <div className="spinner"></div>
-                          <span>Coach is thinking...</span>
+                        <div className="flex flex-col justify-center items-center gap-2 pt-12 text-slate-500">
+                          <Loader2 className="animate-spin h-6 w-6 text-brand-600" />
+                          <span>Coach is formulating review...</span>
                         </div>
                       )}
 
                       {aiError && (
-                        <span style={{ color: 'var(--accent-danger)', fontWeight: 'bold' }}>❌ Error: {aiError}</span>
+                        <span className="text-rose-600 font-bold">❌ Error: {aiError}</span>
                       )}
 
                       {!aiLoading && !aiError && (
                         <>
-                          {/* Schema tab */}
+                          {/* Schema/Tables */}
                           {aiSubTab === 'schema' && (
                             selectedQuestion.ai_schema_context ? (
                               <div dangerouslySetInnerHTML={{ __html: parseMarkdown(selectedQuestion.ai_schema_context) }}></div>
                             ) : (
-                              <div style={{ textAlign: 'center', padding: '30px 10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <span>No table context generated yet.</span>
-                                <button className="btn btn-primary" style={{ alignSelf: 'center' }} onClick={generateSchemaMockTables}>🤖 Model Schema & Tables</button>
+                              <div className="flex flex-col items-center gap-3 pt-12 text-slate-500 text-center">
+                                <HelpCircle className="h-8 w-8 text-slate-300" />
+                                <span>No reference database schemas generated yet.</span>
+                                <button
+                                  className="py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-[10px] transition-colors"
+                                  onClick={generateSchemaMockTables}
+                                >
+                                  🤖 Generate Reference Tables & Schema
+                                </button>
                               </div>
                             )
                           )}
 
-                          {/* Grade Solution tab */}
+                          {/* Grade code */}
                           {aiSubTab === 'hint' && (
                             selectedQuestion.ai_code_review_hint ? (
                               <div dangerouslySetInnerHTML={{ __html: parseMarkdown(selectedQuestion.ai_code_review_hint) }}></div>
                             ) : (
-                              <div style={{ textAlign: 'center', padding: '30px 10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <span>Write some code in the editor, and click below to evaluate.</span>
-                                <button className="btn btn-primary" style={{ alignSelf: 'center' }} onClick={evaluateAndRateSolution}>🤖 Grade & Review Code</button>
+                              <div className="flex flex-col items-center gap-3 pt-12 text-slate-500 text-center">
+                                <TrendingUp className="h-8 w-8 text-slate-300" />
+                                <span>Coach has not graded your query yet.</span>
+                                <button
+                                  className="py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-[10px] transition-colors"
+                                  onClick={evaluateAndRateSolution}
+                                >
+                                  🤖 Evaluate & Rate Code (1-10)
+                                </button>
                               </div>
                             )
                           )}
 
-                          {/* Chat tab */}
+                          {/* Chat */}
                           {aiSubTab === 'chat' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="space-y-3">
                               {(selectedQuestion.ai_chat_history || []).length === 0 ? (
-                                <div className="ai-bubble coach" style={{ padding: '8px', backgroundColor: '#f0fdfa', borderLeft: '3px solid #0d9488', borderRadius: '4px' }}>
-                                  👋 I am your AI Coach! Ask me any doubts about <strong>{selectedQuestion.question || selectedQuestion.title}</strong>, and I will guide you to find the solution.
+                                <div className="p-3 bg-brand-50/50 border border-brand-100 rounded-lg text-brand-700 flex gap-2">
+                                  <MessageSquare className="h-4 w-4 mt-0.5 text-brand-600 flex-shrink-0" />
+                                  <span>👋 I am your AI Coach! Ask me doubts about your queries, logic, or syntax. I'll guide you to the answer.</span>
                                 </div>
                               ) : (
-                                (selectedQuestion.ai_chat_history || []).map((msg, i) => (
-                                  <div key={i} className={`ai-bubble ${msg.role}`} style={{
-                                    padding: '8px',
-                                    borderRadius: '6px',
-                                    backgroundColor: msg.role === 'coach' ? '#f0fdfa' : '#f1f5f9',
-                                    borderLeft: msg.role === 'coach' ? '3px solid #0d9488' : 'none'
-                                  }}>
+                                (selectedQuestion.ai_chat_history || []).map((msg, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`p-2.5 rounded-xl text-xs ${
+                                      msg.role === 'coach' ? 'bg-brand-50/50 border border-brand-100 text-slate-800' : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
                                     <strong>{msg.role === 'coach' ? '🤖 Coach' : '👤 You'}:</strong>
-                                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} style={{ marginTop: '4px' }}></div>
+                                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} className="mt-1"></div>
                                   </div>
                                 ))
                               )}
@@ -1986,17 +2044,19 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* Chat doubt query box */}
+                    {/* Doubts chat entry input */}
                     {aiSubTab === 'chat' && (
-                      <form onSubmit={sendAICustomDoubt} style={{ display: 'flex', gap: '8px' }}>
+                      <form onSubmit={sendAICustomDoubt} className="flex gap-2 mt-2">
                         <input
                           type="text"
-                          className="input-field"
-                          placeholder="Type your doubts (e.g. why do we need CTE here?)..."
+                          placeholder="Type doubts (e.g. why do we need CTE here?)..."
+                          className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-xs bg-white"
                           value={aiChatQuery}
                           onChange={e => setAiChatQuery(e.target.value)}
                         />
-                        <button type="submit" className="btn btn-primary">Ask</button>
+                        <button type="submit" className="py-2 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors">
+                          Ask
+                        </button>
                       </form>
                     )}
 

@@ -17,7 +17,7 @@ async function main() {
     await client.connect();
     console.log("Connected successfully!");
 
-    console.log("Creating tables...");
+    console.log("Creating/updating tables...");
 
     // 1. Users Table
     await client.query(`
@@ -44,11 +44,22 @@ async function main() {
         simulated_date VARCHAR(10) DEFAULT NULL,
         claimed_checkin_dates TEXT[] DEFAULT '{}',
         daily_quests JSONB DEFAULT '[]'::jsonb,
+        total_money_earned INT DEFAULT 0,
+        weekly_money_earned INT DEFAULT 0,
+        current_week INT DEFAULT 1,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("- Created 'users' table");
+
+    // Safely add columns if users table pre-existed
+    await client.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS total_money_earned INT DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS weekly_money_earned INT DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS current_week INT DEFAULT 1;
+    `);
+    console.log("- Ensured 'users' table columns");
 
     // 2. Calendar Progress Table
     await client.query(`
@@ -63,10 +74,18 @@ async function main() {
         notes TEXT DEFAULT '',
         time_spent_minutes INT DEFAULT 0,
         rating INT DEFAULT NULL,
+        daily_reward_earned INT DEFAULT 0,
+        reward_claimed BOOLEAN DEFAULT FALSE,
         PRIMARY KEY (user_id, day_number)
       );
     `);
-    console.log("- Created 'user_calendar_progress' table");
+
+    await client.query(`
+      ALTER TABLE user_calendar_progress 
+      ADD COLUMN IF NOT EXISTS daily_reward_earned INT DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS reward_claimed BOOLEAN DEFAULT FALSE;
+    `);
+    console.log("- Ensured 'user_calendar_progress' table columns");
 
     // 3. Question Progress Table (handles SQL, DSA, PySpark, Concepts, Interview Prep)
     await client.query(`
@@ -88,10 +107,18 @@ async function main() {
         ai_schema_context TEXT DEFAULT NULL,
         ai_code_review_hint TEXT DEFAULT NULL,
         ai_chat_history JSONB DEFAULT '[]'::jsonb,
+        ai_score INT DEFAULT NULL,
+        ai_feedback TEXT DEFAULT '',
         PRIMARY KEY (user_id, category, item_id)
       );
     `);
-    console.log("- Created 'user_question_progress' table");
+
+    await client.query(`
+      ALTER TABLE user_question_progress 
+      ADD COLUMN IF NOT EXISTS ai_score INT DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS ai_feedback TEXT DEFAULT '';
+    `);
+    console.log("- Ensured 'user_question_progress' table columns");
 
     // 4. Projects Progress Table
     await client.query(`
@@ -107,7 +134,7 @@ async function main() {
         PRIMARY KEY (user_id, project_name, project_week)
       );
     `);
-    console.log("- Created 'user_projects_progress' table");
+    console.log("- Ensured 'user_projects_progress' table");
 
     // 5. Milestones Progress Table
     await client.query(`
@@ -118,7 +145,6 @@ async function main() {
         PRIMARY KEY (user_id, milestone_name)
       );
     `);
-    console.log("- Created 'user_milestones_progress' table");
 
     // 6. Cheat Sheets Progress Table
     await client.query(`
@@ -129,7 +155,6 @@ async function main() {
         PRIMARY KEY (user_id, sheet_key)
       );
     `);
-    console.log("- Created 'user_cheat_sheets' table");
 
     // 7. Target Companies Progress Table
     await client.query(`
@@ -143,7 +168,21 @@ async function main() {
         PRIMARY KEY (user_id, company_name)
       );
     `);
-    console.log("- Created 'user_target_companies' table");
+
+    // 8. AI Quizzes Table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_ai_quizzes (
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        day_number INT NOT NULL,
+        topic VARCHAR(255) NOT NULL,
+        score INT DEFAULT 0,
+        total INT DEFAULT 3,
+        completed BOOLEAN DEFAULT FALSE,
+        completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, day_number)
+      );
+    `);
+    console.log("- Ensured 'user_ai_quizzes' table");
 
     console.log("Database schema setup complete!");
   } catch (err) {

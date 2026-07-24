@@ -223,6 +223,7 @@ app.get('/api/user/:userId/data', async (req, res) => {
     const milestonesResult = await pool.query('SELECT * FROM user_milestones_progress WHERE user_id = $1', [userId]);
     const sheetsResult = await pool.query('SELECT * FROM user_cheat_sheets WHERE user_id = $1', [userId]);
     const companiesResult = await pool.query('SELECT * FROM user_target_companies WHERE user_id = $1', [userId]);
+    const quizzesResult = await pool.query('SELECT * FROM user_ai_quizzes WHERE user_id = $1', [userId]);
 
     res.json({
       profile,
@@ -231,7 +232,8 @@ app.get('/api/user/:userId/data', async (req, res) => {
       projects: projectsResult.rows,
       milestones: milestonesResult.rows,
       cheat_sheets: sheetsResult.rows,
-      target_companies: companiesResult.rows
+      target_companies: companiesResult.rows,
+      quizzes: quizzesResult.rows
     });
   } catch (err) {
     console.error('Fetch progress error:', err);
@@ -263,7 +265,10 @@ app.post('/api/user/:userId/update-profile', async (req, res) => {
     daily_quests,
     daily_study_hours,
     goal,
-    target_companies
+    target_companies,
+    total_money_earned,
+    weekly_money_earned,
+    current_week
   } = req.body;
 
   try {
@@ -274,8 +279,9 @@ app.post('/api/user/:userId/update-profile', async (req, res) => {
            theme_matrix_editor = $9, ai_coach_calls = $10, gemini_api_key = $11,
            last_checkin_date = $12, last_quest_date = $13, simulated_date = $14,
            claimed_checkin_dates = $15, daily_quests = $16, daily_study_hours = $17,
-           goal = $18, target_companies = $19, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $20`,
+           goal = $18, target_companies = $19, total_money_earned = $20,
+           weekly_money_earned = $21, current_week = $22, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $23`,
       [
         balance || 0,
         current_streak || 0,
@@ -296,6 +302,9 @@ app.post('/api/user/:userId/update-profile', async (req, res) => {
         daily_study_hours || 5,
         goal || '',
         target_companies || [],
+        total_money_earned || 0,
+        weekly_money_earned || 0,
+        current_week || 1,
         userId
       ]
     );
@@ -318,15 +327,17 @@ app.post('/api/user/:userId/update-calendar-day', async (req, res) => {
     penalized,
     notes,
     time_spent_minutes,
-    rating
+    rating,
+    daily_reward_earned,
+    reward_claimed
   } = req.body;
 
   try {
     await pool.query(
       `INSERT INTO user_calendar_progress (
          user_id, day_number, morning_completed, afternoon_completed, evening_completed,
-         completed, penalized, notes, time_spent_minutes, rating
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         completed, penalized, notes, time_spent_minutes, rating, daily_reward_earned, reward_claimed
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (user_id, day_number) DO UPDATE SET
          morning_completed = EXCLUDED.morning_completed,
          afternoon_completed = EXCLUDED.afternoon_completed,
@@ -335,7 +346,9 @@ app.post('/api/user/:userId/update-calendar-day', async (req, res) => {
          penalized = EXCLUDED.penalized,
          notes = EXCLUDED.notes,
          time_spent_minutes = EXCLUDED.time_spent_minutes,
-         rating = EXCLUDED.rating`,
+         rating = EXCLUDED.rating,
+         daily_reward_earned = EXCLUDED.daily_reward_earned,
+         reward_claimed = EXCLUDED.reward_claimed`,
       [
         userId,
         day_number,
@@ -346,7 +359,9 @@ app.post('/api/user/:userId/update-calendar-day', async (req, res) => {
         penalized || false,
         notes || '',
         time_spent_minutes || 0,
-        rating || null
+        rating || null,
+        daily_reward_earned || 0,
+        reward_claimed || false
       ]
     );
     res.json({ success: true, message: `Day ${day_number} updated` });
@@ -356,7 +371,7 @@ app.post('/api/user/:userId/update-calendar-day', async (req, res) => {
   }
 });
 
-// Save Question Progress
+// Save Question Progress (including AI score and AI feedback)
 app.post('/api/user/:userId/update-question', async (req, res) => {
   const userId = parseInt(req.params.userId);
   const {
@@ -375,7 +390,9 @@ app.post('/api/user/:userId/update-question', async (req, res) => {
     detailed_description,
     ai_schema_context,
     ai_code_review_hint,
-    ai_chat_history
+    ai_chat_history,
+    ai_score,
+    ai_feedback
   } = req.body;
 
   try {
@@ -384,8 +401,8 @@ app.post('/api/user/:userId/update-question', async (req, res) => {
          user_id, category, item_id, solved, second_solved, third_solved,
          date_solved, date_second_solved, date_third_solved, notes, solution_code,
          confidence_level, attempts, detailed_description, ai_schema_context,
-         ai_code_review_hint, ai_chat_history
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         ai_code_review_hint, ai_chat_history, ai_score, ai_feedback
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
        ON CONFLICT (user_id, category, item_id) DO UPDATE SET
          solved = EXCLUDED.solved,
          second_solved = EXCLUDED.second_solved,
@@ -400,7 +417,9 @@ app.post('/api/user/:userId/update-question', async (req, res) => {
          detailed_description = EXCLUDED.detailed_description,
          ai_schema_context = EXCLUDED.ai_schema_context,
          ai_code_review_hint = EXCLUDED.ai_code_review_hint,
-         ai_chat_history = EXCLUDED.ai_chat_history`,
+         ai_chat_history = EXCLUDED.ai_chat_history,
+         ai_score = EXCLUDED.ai_score,
+         ai_feedback = EXCLUDED.ai_feedback`,
       [
         userId,
         category,
@@ -418,13 +437,97 @@ app.post('/api/user/:userId/update-question', async (req, res) => {
         detailed_description || null,
         ai_schema_context || null,
         ai_code_review_hint || null,
-        JSON.stringify(ai_chat_history || [])
+        JSON.stringify(ai_chat_history || []),
+        ai_score !== undefined ? ai_score : null,
+        ai_feedback || ''
       ]
     );
     res.json({ success: true, message: `Question ${category} #${item_id} updated` });
   } catch (err) {
     console.error('Update question progress error:', err);
     res.status(500).json({ error: 'Database update failed' });
+  }
+});
+
+// Server-side Verification for Claiming Daily Reward Money (Strict & Anti-Cheat)
+app.post('/api/user/:userId/claim-reward', async (req, res) => {
+  const userId = parseInt(req.params.userId);
+  const { day_number, question_category, question_item_id } = req.body;
+
+  try {
+    // 1. Verify calendar tasks completion for day_number
+    const calRes = await pool.query(
+      'SELECT * FROM user_calendar_progress WHERE user_id = $1 AND day_number = $2',
+      [userId, day_number]
+    );
+    if (calRes.rows.length === 0 || !calRes.rows[0].completed) {
+      return res.status(400).json({ error: 'Daily tasks must be 100% completed before claiming reward!' });
+    }
+    const dayProgress = calRes.rows[0];
+    if (dayProgress.reward_claimed) {
+      return res.status(400).json({ error: 'Daily reward for Day ' + day_number + ' has already been claimed!' });
+    }
+
+    // 2. Verify AI score >= 8 for the linked question
+    if (question_category && question_item_id) {
+      const qRes = await pool.query(
+        'SELECT * FROM user_question_progress WHERE user_id = $1 AND category = $2 AND item_id = $3',
+        [userId, question_category, question_item_id]
+      );
+      if (qRes.rows.length === 0 || !qRes.rows[0].solved || (qRes.rows[0].ai_score === null || qRes.rows[0].ai_score < 8)) {
+        return res.status(400).json({ error: 'Today\'s linked coding question must be solved with an AI Score >= 8/10!' });
+      }
+    }
+
+    // 3. Calculate reward amount based on day of the week (1 to 7 within each week)
+    // Weekly schedule: Day 1: 100, Day 2: 120, Day 3: 140, Day 4: 150, Day 5: 160, Day 6: 165, Day 7: 165 = ₹1000 Total
+    const dayInWeek = ((day_number - 1) % 7) + 1;
+    const rewardSchedule = { 1: 100, 2: 120, 3: 140, 4: 150, 5: 160, 6: 165, 7: 165 };
+    const rewardAmount = rewardSchedule[dayInWeek] || 100;
+
+    // 4. Update user_calendar_progress and users table
+    await pool.query(
+      `UPDATE user_calendar_progress SET daily_reward_earned = $1, reward_claimed = TRUE WHERE user_id = $2 AND day_number = $3`,
+      [rewardAmount, userId, day_number]
+    );
+
+    const userRes = await pool.query(
+      `UPDATE users SET total_money_earned = total_money_earned + $1, weekly_money_earned = weekly_money_earned + $1 WHERE id = $2 RETURNING total_money_earned, weekly_money_earned`,
+      [rewardAmount, userId]
+    );
+
+    res.json({
+      success: true,
+      message: `🎉 Reward claimed! ₹${rewardAmount} added to earnings.`,
+      rewardAmount,
+      total_money_earned: userRes.rows[0].total_money_earned,
+      weekly_money_earned: userRes.rows[0].weekly_money_earned
+    });
+  } catch (err) {
+    console.error('Claim reward error:', err);
+    res.status(500).json({ error: 'Failed to process reward claim' });
+  }
+});
+
+// Save AI Quiz Progress
+app.post('/api/user/:userId/update-quiz', async (req, res) => {
+  const userId = parseInt(req.params.userId);
+  const { day_number, topic, score, total, completed } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO user_ai_quizzes (user_id, day_number, topic, score, total, completed)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_id, day_number) DO UPDATE SET
+         score = EXCLUDED.score,
+         total = EXCLUDED.total,
+         completed = EXCLUDED.completed,
+         completed_at = CURRENT_TIMESTAMP`,
+      [userId, day_number, topic || 'Topic Quiz', score || 0, total || 3, completed || false]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Quiz update error:', err);
+    res.status(500).json({ error: 'Quiz update failed' });
   }
 });
 
@@ -583,6 +686,7 @@ app.get('/api/admin/users', async (req, res) => {
   try {
     const query = `
       SELECT u.id, u.name, u.email, u.goal, u.daily_study_hours, u.balance, u.current_streak, u.best_streak, u.xp, u.level, u.created_at,
+             u.total_money_earned, u.weekly_money_earned,
              (SELECT COUNT(*) FROM user_calendar_progress WHERE user_id = u.id AND completed = true) as calendar_completed,
              (SELECT COUNT(*) FROM user_question_progress WHERE user_id = u.id AND solved = true) as questions_solved,
              (SELECT COUNT(*) FROM user_projects_progress WHERE user_id = u.id AND completed = true) as projects_completed

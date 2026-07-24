@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { marked } from 'marked';
 import {
   LayoutDashboard,
   Calendar,
@@ -21,8 +22,33 @@ import {
   TrendingUp,
   User,
   HelpCircle,
-  Play
+  Play,
+  BookOpen,
+  DollarSign,
+  Database,
+  Sparkles,
+  CheckCircle2,
+  Award,
+  ArrowRight,
+  BrainCircuit,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
+// Configure marked options for GFM
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
+
+function parseMarkdown(text) {
+  if (!text) return '';
+  try {
+    return marked.parse(text);
+  } catch (e) {
+    return text;
+  }
+}
 
 // Timezone-aware local date helper
 function getLocalDateString() {
@@ -30,77 +56,6 @@ function getLocalDateString() {
   const offset = d.getTimezoneOffset();
   const localDate = new Date(d.getTime() - (offset * 60 * 1000));
   return localDate.toISOString().split('T')[0];
-}
-
-// Markdown parser helper for mock schemas and AI responses
-function parseMarkdown(text) {
-  if (!text) return '';
-  let html = text;
-
-  // Escape basic HTML tags to prevent issues
-  html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  // Code blocks
-  html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
-    return `<pre class="bg-slate-900 text-slate-100 p-4 rounded-xl font-code text-xs overflow-x-auto my-3 text-left"><code>${code.trim()}</code></pre>`;
-  });
-
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code class="font-code bg-slate-100 px-1.5 py-0.5 rounded text-xs text-brand-600 font-semibold">$1</code>');
-
-  // Bold text
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-  // Headers
-  html = html.replace(/^### (.*$)/gim, '<h4 class="text-sm font-bold mt-4 mb-1.5 text-slate-800">$1</h4>');
-  html = html.replace(/^## (.*$)/gim, '<h3 class="text-base font-extrabold mt-5 mb-2 text-slate-800 border-b border-slate-200 pb-1">$1</h3>');
-  html = html.replace(/^# (.*$)/gim, '<h2 class="text-lg font-black mt-6 mb-3 text-slate-900">$1</h2>');
-
-  // Unordered Lists
-  html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-xs text-slate-600 my-0.5">$1</li>');
-
-  // Ordered Lists
-  html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li class="ml-4 list-decimal text-xs text-slate-600 my-0.5">$1</li>');
-
-  // Simple Table parser
-  const lines = html.split('\n');
-  let inTable = false;
-  let tableHTML = '';
-
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
-    if (line.startsWith('|')) {
-      if (!inTable) {
-        inTable = true;
-        tableHTML = '<table class="w-full border-collapse border border-slate-200 text-xs my-3">';
-      }
-
-      let cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
-      if (line.includes('---')) continue;
-
-      tableHTML += '<tr class="border-b border-slate-200">';
-      cells.forEach(cell => {
-        if (tableHTML.indexOf('</th>') === -1) {
-          tableHTML += `<th class="bg-slate-50 p-2.5 font-bold text-left border-r border-slate-200 text-slate-700">${cell}</th>`;
-        } else {
-          tableHTML += `<td class="p-2.5 border-r border-slate-200 text-slate-600 bg-white">${cell}</td>`;
-        }
-      });
-      tableHTML += '</tr>';
-    } else {
-      if (inTable) {
-        inTable = false;
-        tableHTML += '</table>';
-        lines[i - 1] = tableHTML;
-      }
-    }
-  }
-  html = lines.join('\n');
-
-  // Paragraph breaks
-  html = html.replace(/\n\n/g, '<p class="my-2 text-xs text-slate-600"></p>');
-
-  return html;
 }
 
 export default function App() {
@@ -113,6 +68,9 @@ export default function App() {
   const [qbankFilters, setQbankFilters] = useState({ search: '', difficulty: '', status: '' });
   const [notifications, setNotifications] = useState([]);
   
+  // Dashboard Active Day selector state
+  const [dashboardDayNumber, setDashboardDayNumber] = useState(1);
+
   // Modal toggles
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -122,8 +80,24 @@ export default function App() {
   const [workspaceNotes, setWorkspaceNotes] = useState('');
   const [aiSubTab, setAiSubTab] = useState('schema');
   const [aiChatQuery, setAiChatQuery] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState('');
+
+  // Granular AI Loading States (Prevents triggering spinners on unclicked buttons!)
+  const [schemaLoading, setSchemaLoading] = useState(false);
+  const [evalLoading, setEvalLoading] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  // DE Playground State
+  const [playgroundTopic, setPlaygroundTopic] = useState('scd');
+  const [playgroundPrompt, setPlaygroundPrompt] = useState('');
+  const [playgroundContent, setPlaygroundContent] = useState('');
+  const [playgroundLoading, setPlaygroundLoading] = useState(false);
+
+  // AI Quiz Modal State
+  const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizLoading, setQuizLoading] = useState(false);
 
   // Authentication overlays state
   const [authMode, setAuthMode] = useState('login');
@@ -182,6 +156,12 @@ export default function App() {
           }
           const progressPayload = await resProgress.json();
           mergeUserProgress(baselineData, progressPayload);
+
+          // Set default dashboard day to first uncompleted day
+          const uncompletedIndex = (baselineData.calendar || []).findIndex(d => !d.completed);
+          if (uncompletedIndex !== -1) {
+            setDashboardDayNumber(baselineData.calendar[uncompletedIndex].day_number);
+          }
         } else {
           setDb(baselineData);
         }
@@ -217,14 +197,17 @@ export default function App() {
       current_streak: profile?.current_streak || 0,
       best_streak: profile?.best_streak || 0,
       xp: profile?.xp || 0,
-      level: profile?.level || 1,
+      level: Math.floor((profile?.xp || 0) / 100) + 1,
       ai_coach_calls: profile?.ai_coach_calls || 0,
       gemini_api_key: profile?.gemini_api_key || '',
       simulated_date: profile?.simulated_date || getLocalDateString(),
       last_checkin_date: profile?.last_checkin_date,
       last_quest_date: profile?.last_quest_date,
       claimed_checkin_dates: profile?.claimed_checkin_dates || [],
-      daily_quests: profile?.daily_quests || []
+      daily_quests: profile?.daily_quests || [],
+      total_money_earned: profile?.total_money_earned || 0,
+      weekly_money_earned: profile?.weekly_money_earned || 0,
+      current_week: profile?.current_week || 1
     };
 
     // Merge Calendar Days
@@ -240,6 +223,8 @@ export default function App() {
         targetDay.notes = row.notes || '';
         targetDay.time_spent_minutes = row.time_spent_minutes || 0;
         targetDay.rating = row.rating;
+        targetDay.daily_reward_earned = row.daily_reward_earned || 0;
+        targetDay.reward_claimed = row.reward_claimed || false;
       }
     });
 
@@ -263,6 +248,8 @@ export default function App() {
         targetQ.ai_schema_context = row.ai_schema_context || null;
         targetQ.ai_code_review_hint = row.ai_code_review_hint || null;
         targetQ.ai_chat_history = row.ai_chat_history || [];
+        targetQ.ai_score = row.ai_score !== undefined ? row.ai_score : null;
+        targetQ.ai_feedback = row.ai_feedback || '';
       }
     });
 
@@ -296,6 +283,9 @@ export default function App() {
       }
     });
 
+    // Merge Quizzes
+    merged.quizzes = data.quizzes || [];
+
     setDb(merged);
   };
 
@@ -328,7 +318,9 @@ export default function App() {
           penalized: day.penalized,
           notes: day.notes,
           time_spent_minutes: day.time_spent_minutes,
-          rating: day.rating
+          rating: day.rating,
+          daily_reward_earned: day.daily_reward_earned || 0,
+          reward_claimed: day.reward_claimed || false
         })
       });
     } catch (err) {
@@ -352,11 +344,58 @@ export default function App() {
           attempts: question.attempts || 0,
           ai_schema_context: question.ai_schema_context || null,
           ai_code_review_hint: question.ai_code_review_hint || null,
-          ai_chat_history: question.ai_chat_history || []
+          ai_chat_history: question.ai_chat_history || [],
+          ai_score: question.ai_score !== undefined ? question.ai_score : null,
+          ai_feedback: question.ai_feedback || ''
         })
       });
     } catch (err) {
       console.error("Question sync error:", err);
+    }
+  };
+
+  // Server-side verification for claiming daily reward money
+  const claimDailyRewardMoney = async (dayNumber, linkedCategory, linkedItemId) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(API_BASE_URL + `/api/user/${currentUser.id}/claim-reward`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day_number: dayNumber,
+          question_category: linkedCategory,
+          question_item_id: linkedItemId
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showNotification(`⚠️ ${data.error || 'Reward claim failed'}`, 'error');
+        return;
+      }
+
+      // Update state locally
+      const updatedCalendar = [...db.calendar];
+      const day = updatedCalendar.find(d => d.day_number === dayNumber);
+      if (day) {
+        day.reward_claimed = true;
+        day.daily_reward_earned = data.rewardAmount;
+      }
+
+      const updatedProfile = {
+        ...db.user_profile,
+        total_money_earned: data.total_money_earned,
+        weekly_money_earned: data.weekly_money_earned
+      };
+
+      setDb(prev => ({
+        ...prev,
+        calendar: updatedCalendar,
+        user_profile: updatedProfile
+      }));
+
+      showNotification(`🎉 ${data.message}`, 'success');
+    } catch (err) {
+      showNotification('Network error claiming reward.', 'error');
     }
   };
 
@@ -527,11 +566,11 @@ export default function App() {
 
   // Upgraded Gemini AI Coach Integration
   const callGemini = async (systemInstruction, promptText) => {
-    const apiKey = db.user_profile.gemini_api_key;
+    const apiKey = db?.user_profile?.gemini_api_key;
     if (!apiKey) {
       throw new Error("No Gemini API key defined in Settings! Please add your key first.");
     }
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
     const payload = {
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents: [{ role: "user", parts: [{ text: promptText }] }]
@@ -551,21 +590,20 @@ export default function App() {
     return data.candidates[0].content.parts[0].text;
   };
 
+  // AI Feature 1: Generate Mock Database Tables & Schema Context for SQL/Coding
   const generateSchemaMockTables = async () => {
-    setAiLoading(true);
-    setAiError('');
-    const sys = "You are the Data Engineering Coach. You help the user understand queries and algorithms. You must NEVER give the direct solution code. You explain concepts, generate rich markdown tables, database schemas, and edge case parameters.";
+    setSchemaLoading(true);
+    const sys = "You are an expert Data Engineering Mentor. Generate realistic, clear SQL database schemas with sample rows and column definitions. You must NEVER reveal the solution code. Format output as clean Markdown tables with header bars and bold column descriptions.";
     const prompt = `
       Category: ${selectedQuestionCategory.toUpperCase()}
       Question: ${selectedQuestion.question || selectedQuestion.title}
       Topic: ${selectedQuestion.topic || selectedQuestion.pattern || "General"}
 
       Task:
-      If it is a SQL question, generate a realistic database table schema (represented as clean markdown tables) and 3-5 rows of sample records, explaining what each column represents.
-      If it is a DSA question, generate 3 sample test cases showing input and expected outputs, highlighting edge cases.
-      If it is a PySpark or Core Concept question, explain the underlying architecture, mechanics, and trade-offs.
+      Generate 2-3 realistic database table schemas (e.g. \`customers\`, \`orders\`, \`logs\`) with column names, data types, primary/foreign key indicators, and 3-5 sample rows of dummy data.
+      Explain what problem this table schema models in Data Engineering.
 
-      Remember: DO NOT write any SQL or Python solution code. Focus purely on schemas and test cases.
+      Format using clean Markdown tables. DO NOT write any SQL solution queries.
     `;
 
     try {
@@ -582,7 +620,7 @@ export default function App() {
         xp: db.user_profile.xp + 10,
         ai_coach_calls: (db.user_profile.ai_coach_calls || 0) + 1
       };
-      updatedProfile.level = Math.floor(Math.sqrt(updatedProfile.xp / 100)) + 1;
+      updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
 
       setDb(prev => ({
         ...prev,
@@ -591,29 +629,29 @@ export default function App() {
 
       syncProfile(updatedProfile);
       syncQuestion(selectedQuestionCategory, updatedQ);
-      showNotification("📊 Schema context generated! +10 XP");
+      showNotification("📊 Schema tables generated! +10 XP");
     } catch (err) {
-      setAiError(err.message);
+      showNotification(`❌ ${err.message}`, "error");
     } finally {
-      setAiLoading(false);
+      setSchemaLoading(false);
     }
   };
 
+  // AI Feature 2: Auto-Scorer (0-10) with Critique & Hints
   const evaluateAndRateSolution = async () => {
     if (!workspaceCode.trim()) {
       alert("Please write some code inside the editor before asking the coach to evaluate!");
       return;
     }
-    setAiLoading(true);
-    setAiError('');
+    setEvalLoading(true);
 
-    const sys = "You are the Data Engineering Coach. You evaluate the user's code and rate it on a scale of 1 to 10. You identify logic bugs, edge case failures, performance issues, or syntax flaws. You must NEVER give the direct solution code. You must respond in a friendly tone giving a clear Score /10, a breakdown critique, and incremental hints.";
+    const sys = "You are a strict yet encouraging Data Engineering Code Reviewer. You evaluate student code against schema requirements. You MUST start your response with a line formatted exactly as: 'SCORE: X/10' (where X is an integer from 0 to 10). Next, provide a detailed review highlighting what works, logical flaws, performance concerns, and 2-3 step-by-step hints. NEVER give the direct solution code.";
     const prompt = `
       Question: ${selectedQuestion.question || selectedQuestion.title}
       Category: ${selectedQuestionCategory.toUpperCase()}
       
-      Generated Reference Schema Context:
-      ${selectedQuestion.ai_schema_context || "No mock tables generated yet."}
+      Reference Database Schema Context:
+      ${selectedQuestion.ai_schema_context || "Standard relational/big-data table."}
       
       Student's Code Solution:
       \`\`\`
@@ -621,28 +659,52 @@ export default function App() {
       \`\`\`
 
       Task:
-      1. Rate the solution on a scale of 1 to 10 (where 10 is fully correct, optimal, and matches the schema constraints).
-      2. Provide a constructive review, explaining what works and where the logical errors lie.
-      3. Give 2-3 incremental hints so the student can fix the flaws.
+      Evaluate the student's solution.
+      Output format:
+      SCORE: <0-10>/10
       
-      Remember: DO NOT write any corrected SQL queries or python code. Focus on guiding.
+      ### Code Review Breakdown
+      - **Correctness & Logic:** ...
+      - **Edge Cases & Efficiency:** ...
+      
+      ### Incremental Hints
+      1. ...
+      2. ...
     `;
 
     try {
       const result = await callGemini(sys, prompt);
-      const updatedQ = { ...selectedQuestion, ai_code_review_hint: result };
+
+      let scoreVal = null;
+      const match = result.match(/SCORE:\s*(\d{1,2})\/10/i);
+      if (match) {
+        scoreVal = parseInt(match[1]);
+      } else {
+        scoreVal = 7;
+      }
+
+      const updatedQ = {
+        ...selectedQuestion,
+        ai_code_review_hint: result,
+        ai_score: scoreVal,
+        ai_feedback: result,
+        solved: scoreVal >= 7
+      };
       setSelectedQuestion(updatedQ);
 
       let list = getQuestionList(selectedQuestionCategory);
       const idx = list.findIndex(q => q.id === selectedQuestion.id);
       if (idx !== -1) list[idx] = updatedQ;
 
+      let bonusXp = 15;
+      if (scoreVal >= 8) bonusXp += 50;
+
       const updatedProfile = {
         ...db.user_profile,
-        xp: db.user_profile.xp + 15,
+        xp: db.user_profile.xp + bonusXp,
         ai_coach_calls: (db.user_profile.ai_coach_calls || 0) + 1
       };
-      updatedProfile.level = Math.floor(Math.sqrt(updatedProfile.xp / 100)) + 1;
+      updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
 
       setDb(prev => ({
         ...prev,
@@ -651,19 +713,27 @@ export default function App() {
 
       syncProfile(updatedProfile);
       syncQuestion(selectedQuestionCategory, updatedQ);
-      showNotification("💡 Solution graded by Coach! +15 XP");
+
+      // Auto-switch tab to AI Review pane so student sees score & feedback popup immediately!
+      setWorkspaceTab('coach');
+      setAiSubTab('hint');
+
+      if (scoreVal >= 8) {
+        showNotification(`🏆 High Distinction! AI Score: ${scoreVal}/10! +${bonusXp} XP`);
+      } else {
+        showNotification(`💡 AI Score: ${scoreVal}/10. Review feedback on the right pane!`);
+      }
     } catch (err) {
-      setAiError(err.message);
+      showNotification(`❌ ${err.message}`, "error");
     } finally {
-      setAiLoading(false);
+      setEvalLoading(false);
     }
   };
 
   const sendAICustomDoubt = async (e) => {
     e.preventDefault();
     if (!aiChatQuery.trim()) return;
-    setAiLoading(true);
-    setAiError('');
+    setChatLoading(true);
 
     const sys = "You are the Data Engineering Coach. You help the user debug. You must NEVER give the direct solution code. Guide them through hints, questions, or edge cases.";
     const userMessage = { role: "user", text: aiChatQuery };
@@ -689,21 +759,155 @@ export default function App() {
       syncQuestion(selectedQuestionCategory, updatedQ);
       setAiChatQuery('');
     } catch (err) {
-      setAiError(err.message);
+      showNotification(`❌ ${err.message}`, "error");
     } finally {
-      setAiLoading(false);
+      setChatLoading(false);
     }
+  };
+
+  // AI Feature 3: DE Playground Concept Explainer
+  const generatePlaygroundConcept = async (topicKey, userQuery) => {
+    setPlaygroundLoading(true);
+    const sys = "You are a world-class Data Engineering Teacher explaining concepts to a beginner student. Use clear analogies, ASCII or Markdown architecture diagrams, real-world ETL pipeline scenarios (e.g. Uber, Netflix), and 3 flashcards. Make it encouraging and engaging. Format nicely in Markdown.";
+    const prompt = `
+      Topic: ${topicKey}
+      Student Question: ${userQuery || "Explain this concept from scratch with real-world Data Engineering examples."}
+
+      Task:
+      1. Simple 2-sentence summary.
+      2. Comprehensive breakdown with a diagram (ASCII or Markdown).
+      3. Real-world scenario (e.g. Netflix, Uber data pipeline).
+      4. 3 Quick Flashcards (Concept vs Alternative).
+    `;
+
+    try {
+      const result = await callGemini(sys, prompt);
+      setPlaygroundContent(result);
+    } catch (err) {
+      setPlaygroundContent("❌ Error generating explanation. Please check your Gemini API key in Settings.");
+    } finally {
+      setPlaygroundLoading(false);
+    }
+  };
+
+  // AI Feature 4: Generate Interactive Topic Quiz
+  const generateAIQuiz = async (dayTopic) => {
+    setQuizLoading(true);
+    setQuizSubmitted(false);
+    setQuizAnswers({});
+
+    const sys = "You generate 3 multiple-choice questions for a beginner Data Engineering student based on a curriculum topic. Output strictly valid JSON without markdown codeblock syntax, formatted as an array of objects: [{\"question\":\"...\", \"options\":[\"...\", \"...\", \"...\", \"...\"], \"answerIndex\":0, \"explanation\":\"...\"}].";
+    const prompt = `Generate 3 multiple choice questions for Data Engineering topic: "${dayTopic}"`;
+
+    try {
+      const rawText = await callGemini(sys, prompt);
+      const cleaned = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      setQuizQuestions(parsed);
+      setQuizModalOpen(true);
+    } catch (err) {
+      showNotification("Could not generate quiz. Check Gemini API key in Settings.", "error");
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
+  const submitQuiz = () => {
+    setQuizSubmitted(true);
+    let correctCount = 0;
+    quizQuestions.forEach((q, idx) => {
+      if (quizAnswers[idx] === q.answerIndex) correctCount++;
+    });
+
+    let bonusXp = correctCount * 15;
+    if (correctCount === quizQuestions.length) bonusXp += 25;
+
+    const updatedProfile = {
+      ...db.user_profile,
+      xp: db.user_profile.xp + bonusXp
+    };
+    updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
+
+    setDb(prev => ({ ...prev, user_profile: updatedProfile }));
+    syncProfile(updatedProfile);
+    showNotification(`🎯 Quiz Completed! Score: ${correctCount}/${quizQuestions.length}. +${bonusXp} XP!`);
   };
 
   // Helper selectors
   const getQuestionList = (cat) => {
     if (!db) return [];
-    if (cat === 'sql') return db.sql_question_bank;
-    if (cat === 'dsa') return db.dsa_problems;
-    if (cat === 'pyspark') return db.pyspark_questions;
-    if (cat === 'concepts') return db.de_concepts;
-    if (cat === 'interview') return db.interview_prep;
+    if (cat === 'sql') return db.sql_question_bank || [];
+    if (cat === 'dsa') return db.dsa_problems || [];
+    if (cat === 'pyspark') return db.pyspark_questions || [];
+    if (cat === 'concepts') return db.de_concepts || [];
+    if (cat === 'interview') return db.interview_prep || [];
     return [];
+  };
+
+  // Helper: Find targeted linked questions for a given day (max 2-4 questions)
+  const getLinkedQuestionsForDay = (day) => {
+    if (!day || !db) return [];
+    
+    const dayText = `${day.focus_area || ''} ${day.topic || ''} ${day.morning_task || ''} ${day.afternoon_task || ''} ${day.evening_task || ''}`.toLowerCase();
+    const linked = [];
+    const seenIds = new Set();
+
+    const stopWords = ['the', 'and', 'for', 'all', 'sql', 'dsa', 'basic', 'easy', 'data', 'code', 'with', 'from', 'table', 'tables', 'type', 'types', 'into', 'select'];
+    const isMatch = (keyword) => {
+      if (!keyword || keyword.length < 3) return false;
+      const kw = keyword.toLowerCase().trim();
+      if (stopWords.includes(kw)) return false;
+      return dayText.includes(kw);
+    };
+
+    // Search SQL bank
+    (db.sql_question_bank || []).forEach(q => {
+      const qKey = `sql-${q.id}`;
+      if (!seenIds.has(qKey)) {
+        if (isMatch(q.topic) || isMatch(q.question)) {
+          seenIds.add(qKey);
+          linked.push({ category: 'sql', ...q });
+        }
+      }
+    });
+
+    // Search DSA bank
+    (db.dsa_problems || []).forEach(q => {
+      const qKey = `dsa-${q.id}`;
+      if (!seenIds.has(qKey)) {
+        if (isMatch(q.pattern) || isMatch(q.title)) {
+          seenIds.add(qKey);
+          linked.push({ category: 'dsa', ...q });
+        }
+      }
+    });
+
+    // Search PySpark bank
+    (db.pyspark_questions || []).forEach(q => {
+      const qKey = `pyspark-${q.id}`;
+      if (!seenIds.has(qKey)) {
+        if (isMatch(q.topic) || isMatch(q.question)) {
+          seenIds.add(qKey);
+          linked.push({ category: 'pyspark', ...q });
+        }
+      }
+    });
+
+    // Fallback: If no specific keyword matches, link 2 questions by day_number modulo (1 SQL + 1 DSA)
+    if (linked.length === 0) {
+      const dayNum = day.day_number || 1;
+      if (db.sql_question_bank && db.sql_question_bank.length > 0) {
+        const sqlIdx = (dayNum - 1) % db.sql_question_bank.length;
+        linked.push({ category: 'sql', ...db.sql_question_bank[sqlIdx] });
+      }
+      if (db.dsa_problems && db.dsa_problems.length > 0) {
+        const dsaIdx = (dayNum - 1) % db.dsa_problems.length;
+        linked.push({ category: 'dsa', ...db.dsa_problems[dsaIdx] });
+      }
+    }
+
+    // Return at most 4 questions for a clean UI
+    return linked.slice(0, 4);
   };
 
   // Checkbox Checkin System (Calendar Day Completion)
@@ -731,7 +935,7 @@ export default function App() {
 
     if (allChecked && !wasCompleted) {
       xpGained += 50;
-      showNotification("☀️ Day fully completed! +50 XP bonus!");
+      showNotification("☀️ Day tasks complete!");
     } else if (!allChecked && wasCompleted) {
       xpGained -= 50;
     }
@@ -766,7 +970,7 @@ export default function App() {
       current_streak: currentStreak,
       best_streak: bestStreak
     };
-    updatedProfile.level = Math.floor(Math.sqrt(updatedProfile.xp / 100)) + 1;
+    updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
 
     setDb(prev => ({
       ...prev,
@@ -793,6 +997,7 @@ export default function App() {
     showNotification("📅 Day details saved successfully.");
   };
 
+  // Solve Question and CLOSE Modal with Notification
   const handleSolveQuestion = (solvedState) => {
     const updatedQ = {
       ...selectedQuestion,
@@ -810,14 +1015,13 @@ export default function App() {
     let xpGained = 0;
     if (solvedState && !selectedQuestion.solved) {
       xpGained = 100;
-      showNotification("🏆 Question Solved! +100 XP");
     }
 
     const updatedProfile = {
       ...db.user_profile,
       xp: db.user_profile.xp + xpGained
     };
-    updatedProfile.level = Math.floor(Math.sqrt(updatedProfile.xp / 100)) + 1;
+    updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
 
     setDb(prev => ({
       ...prev,
@@ -826,6 +1030,10 @@ export default function App() {
 
     syncProfile(updatedProfile);
     syncQuestion(selectedQuestionCategory, updatedQ);
+
+    // Show toast notification and CLOSE MODAL automatically!
+    showNotification("💾 Solution saved successfully!", "success");
+    setSelectedQuestion(null);
   };
 
   const toggleProject = (projectName, week, checked) => {
@@ -844,7 +1052,7 @@ export default function App() {
       ...db.user_profile,
       xp: Math.max(0, db.user_profile.xp + xpGained)
     };
-    updatedProfile.level = Math.floor(Math.sqrt(updatedProfile.xp / 100)) + 1;
+    updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
 
     setDb(prev => ({
       ...prev,
@@ -926,7 +1134,7 @@ export default function App() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm"
                   value={signupForm.goal}
                   onChange={e => setSignupForm({ ...signupForm, goal: e.target.value })}
-                  placeholder="e.g. Big Data Engineer"
+                  placeholder="e.g. Data Engineer"
                 />
               </div>
             )}
@@ -966,7 +1174,7 @@ export default function App() {
   const filteredQBankList = getQuestionList(activeQBankTab).filter(item => {
     const searchVal = qbankFilters.search.toLowerCase();
     const matchesSearch = (item.question || item.title || '').toLowerCase().includes(searchVal) ||
-      (item.category || '').toLowerCase().includes(searchVal) ||
+      (item.category || activeQBankTab || '').toLowerCase().includes(searchVal) ||
       (item.topic || item.pattern || '').toLowerCase().includes(searchVal);
 
     let matchesDiff = true;
@@ -984,9 +1192,25 @@ export default function App() {
     return matchesSearch && matchesDiff && matchesStatus;
   });
 
+  // Calculate Next Level XP math cleanly
+  const currentXp = db.user_profile?.xp || 0;
+  const xpProgressInLevel = currentXp % 100;
+  const xpNeededForNextLevel = 100 - xpProgressInLevel;
+
   return (
     <div className="flex min-h-screen bg-slate-50 font-main">
       
+      {/* Toast notifications container */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {notifications.map(n => (
+          <div key={n.id} className={`px-4 py-3 rounded-xl text-xs font-bold text-white shadow-lg flex items-center gap-2 transition-all ${
+            n.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+          }`}>
+            <span>{n.message}</span>
+          </div>
+        ))}
+      </div>
+
       {/* ================= LEFT SIDEBAR ================= */}
       <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between fixed h-screen overflow-y-auto z-40">
         <div>
@@ -1003,6 +1227,7 @@ export default function App() {
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'calendar', label: '182-Day Calendar', icon: Calendar },
               { id: 'qbank', label: 'Question Banks', icon: Code },
+              { id: 'playground', label: 'DE Playground', icon: BookOpen },
               { id: 'projects', label: 'Megaprojects', icon: Folder },
               { id: 'cheatsheets', label: 'Cheat Sheets', icon: FileText },
               { id: 'admin', label: 'Admin Cockpit', icon: Shield },
@@ -1050,25 +1275,35 @@ export default function App() {
       {/* ================= MAIN CONTENT SPACE ================= */}
       <main className="flex-1 ml-64 p-8 min-h-screen">
         <header className="flex justify-between items-center border-b border-slate-200 pb-6 mb-8">
-          <h2 className="text-2xl font-black text-slate-900">
-            {activeTab === 'dashboard' && '📈 Student Dashboard'}
-            {activeTab === 'calendar' && '📅 182-Day Curriculum Tracker'}
-            {activeTab === 'qbank' && '💻 Coding & Concept Banks'}
-            {activeTab === 'projects' && '🚀 Portfolio Megaprojects'}
-            {activeTab === 'cheatsheets' && '📝 Developer Cheat Sheets'}
-            {activeTab === 'admin' && '🛡️ Administrator Control Center'}
-            {activeTab === 'settings' && '⚙️ Configuration & Settings'}
-          </h2>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900">
+              {activeTab === 'dashboard' && '📈 Student Learning Cockpit'}
+              {activeTab === 'calendar' && '📅 182-Day Curriculum Tracker'}
+              {activeTab === 'qbank' && '💻 Coding & SQL Studio'}
+              {activeTab === 'playground' && '💡 DE Concept Learning Playground'}
+              {activeTab === 'projects' && '🚀 Portfolio Megaprojects'}
+              {activeTab === 'cheatsheets' && '📝 Developer Cheat Sheets'}
+              {activeTab === 'admin' && '🛡️ Administrator Control Center'}
+              {activeTab === 'settings' && '⚙️ Configuration & Settings'}
+            </h2>
+          </div>
 
-          {/* Streaks Widget */}
-          <div className="flex gap-4">
+          {/* Streaks & Money Widget */}
+          <div className="flex gap-3 items-center">
+            {/* Weekly Earnings Pill */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-extrabold border border-emerald-200 shadow-sm">
+              <DollarSign className="h-4 w-4 text-emerald-600" />
+              <span>₹{db.user_profile?.weekly_money_earned || 0} / ₹1000 This Week</span>
+            </div>
+
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 text-brand-700 rounded-full text-xs font-bold border border-brand-100">
               <Zap className="h-3.5 w-3.5 text-brand-600 fill-brand-600" />
               <span>{db.user_profile?.xp} XP</span>
             </div>
+
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full text-xs font-bold border border-amber-100">
               <Flame className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-              <span>{db.user_profile?.current_streak} Day Streak (Best: {db.user_profile?.best_streak})</span>
+              <span>{db.user_profile?.current_streak} Day Streak</span>
             </div>
           </div>
         </header>
@@ -1076,96 +1311,250 @@ export default function App() {
         {/* ================= VIEW 1: DASHBOARD ================= */}
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
+            
+            {/* Welcome Encouragement Banner */}
+            <div className="bg-gradient-to-r from-brand-700 via-brand-600 to-teal-800 rounded-2xl p-6 text-white shadow-lg flex justify-between items-center">
+              <div className="space-y-2">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-teal-200">Welcome to Data Engineering 🚀</span>
+                <h3 className="text-2xl font-black">Hi {db.user_profile?.name}! Ready for today's learning?</h3>
+                <p className="text-xs text-teal-100 max-w-xl leading-relaxed">
+                  Master SQL queries, PySpark pipelines, data modeling, and algorithms. Complete today's checklist and score ≥ 8/10 on linked questions to earn your daily rewards!
+                </p>
+              </div>
+
+              <button
+                disabled={quizLoading}
+                className="py-3 px-5 bg-white hover:bg-teal-50 text-brand-800 font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2"
+                onClick={() => {
+                  const today = db.calendar.find(d => d.day_number === dashboardDayNumber) || db.calendar[0];
+                  if (today) generateAIQuiz(today.topic);
+                }}
+              >
+                {quizLoading ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 text-brand-600" />
+                    Generating Quiz...
+                  </>
+                ) : (
+                  <>
+                    <BrainCircuit className="h-4 w-4 text-brand-600" />
+                    Take Today's AI Topic Quiz (+25 XP)
+                  </>
+                )}
+              </button>
+            </div>
+
             {/* Overview Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Level</span>
-                <span className="text-3xl font-extrabold text-brand-600 mt-2">{db.user_profile?.level}</span>
-                <span className="text-xs text-slate-500 mt-2">Next level in {((db.user_profile?.level || 1) * 100) - (db.user_profile?.xp || 0)} XP</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Level Progress</span>
+                <span className="text-3xl font-black text-brand-600 mt-1">Level {db.user_profile?.level}</span>
+                <span className="text-xs text-slate-500 mt-2">Next level in {xpNeededForNextLevel} XP</span>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed Days</span>
-                <span className="text-3xl font-extrabold text-slate-900 mt-2">{db.calendar.filter(d => d.completed).length} / 182</span>
-                <span className="text-xs text-slate-500 mt-2">{Math.round((db.calendar.filter(d => d.completed).length / 182) * 100)}% of curriculum finished</span>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Weekly Rewards</span>
+                  <span className="text-xs font-bold text-emerald-600">Max ₹1000/wk</span>
+                </div>
+                <span className="text-3xl font-black text-emerald-600 mt-1">₹{db.user_profile?.weekly_money_earned || 0}</span>
+                <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full transition-all"
+                    style={{ width: `${Math.min(100, ((db.user_profile?.weekly_money_earned || 0) / 1000) * 100)}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Solved Problems</span>
-                <span className="text-3xl font-extrabold text-slate-900 mt-2">
-                  {getQuestionList('sql').filter(q => q.solved).length + getQuestionList('dsa').filter(q => q.solved).length}
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Money Earned</span>
+                <span className="text-3xl font-black text-slate-900 mt-1">₹{db.user_profile?.total_money_earned || 0}</span>
+                <span className="text-xs text-slate-500 mt-2">Accumulated rewards</span>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed Curriculum</span>
+                <span className="text-3xl font-black text-slate-900 mt-1">
+                  {db.calendar.filter(d => d.completed).length} / 182 Days
                 </span>
-                <span className="text-xs text-slate-500 mt-2">SQL: {getQuestionList('sql').filter(q => q.solved).length} | DSA: {getQuestionList('dsa').filter(q => q.solved).length}</span>
+                <span className="text-xs text-slate-500 mt-2">{Math.round((db.calendar.filter(d => d.completed).length / 182) * 100)}% finished</span>
               </div>
             </div>
 
-            {/* Target Goal Panel */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-3 mb-4">🎯 Target Career Objective</h3>
-              <p className="text-sm text-slate-700">
-                <strong>Target Role:</strong> {db.user_profile?.goal || 'Not specified (go to Settings)'}
-              </p>
-              <p className="text-sm text-slate-700 mt-2">
-                <strong>Companies Focus:</strong> {db.user_profile?.target_companies?.join(', ') || 'Not specified'}
-              </p>
-            </div>
+            {/* Today's Focus & ALL Linked Questions (With Previous / Next Day Navigation Controls!) */}
+            {(() => {
+              const today = db.calendar.find(d => d.day_number === dashboardDayNumber) || db.calendar[0];
+              if (!today) return null;
 
-            {/* Today's Agenda Panel */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-4 mb-4 flex items-center gap-2">
-                <Calendar className="text-brand-600 h-5 w-5" />
-                Today's Agenda (Day {db.calendar.findIndex(d => !d.completed) + 1})
-              </h3>
-              {(() => {
-                const todayIndex = db.calendar.findIndex(d => !d.completed);
-                const today = todayIndex !== -1 ? db.calendar[todayIndex] : db.calendar[0];
-                if (!today) return <span className="text-slate-500 text-sm">All days finished! Excellent job.</span>;
+              const linkedQs = getLinkedQuestionsForDay(today);
 
-                return (
-                  <div className="space-y-4">
-                    <div className="text-sm font-semibold text-brand-700 bg-brand-50/50 px-3 py-1 rounded-md inline-block">
-                      Day Topic: {today.topic}
+              const dayInWeek = ((today.day_number - 1) % 7) + 1;
+              const rewardSchedule = { 1: 100, 2: 120, 3: 140, 4: 150, 5: 160, 6: 165, 7: 165 };
+              const rewardAmount = rewardSchedule[dayInWeek] || 100;
+
+              // Check if at least 1 linked question has score >= 8
+              const hasHighScoringQuestion = linkedQs.some(q => q.ai_score >= 8);
+
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  
+                  {/* Left Column: Today's Tasks Checklist with Day Navigation Arrows */}
+                  <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-3">
+                        {/* Day Navigation Controls */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
+                            onClick={() => setDashboardDayNumber(prev => Math.max(1, prev - 1))}
+                            title="Previous Day"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
+                            onClick={() => setDashboardDayNumber(prev => Math.min(182, prev + 1))}
+                            title="Next Day"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded-full">
+                            Day {today.day_number} of 182 Focus
+                          </span>
+                          <h3 className="text-lg font-black text-slate-900 mt-1">{today.topic}</h3>
+                        </div>
+                      </div>
+
+                      {/* Daily reward claim button */}
+                      <div>
+                        {today.reward_claimed ? (
+                          <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <span>Claimed ₹{today.daily_reward_earned}</span>
+                          </div>
+                        ) : (
+                          <button
+                            className={`py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 ${
+                              today.completed && hasHighScoringQuestion
+                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                            }`}
+                            onClick={() => {
+                              if (today.completed && hasHighScoringQuestion) {
+                                const highQ = linkedQs.find(q => q.ai_score >= 8);
+                                claimDailyRewardMoney(today.day_number, highQ?.category, highQ?.id);
+                              } else {
+                                alert(`🔒 To claim Day ${today.day_number} reward (₹${rewardAmount}):\n1. Complete all 3 daily tasks\n2. Solve at least one linked coding/SQL question with an AI Score >= 8/10`);
+                              }
+                            }}
+                          >
+                            <DollarSign className="h-4 w-4" />
+                            Claim Reward (₹{rewardAmount})
+                          </button>
+                        )}
+                      </div>
                     </div>
 
+                    {/* Daily Checklist Tasks */}
                     <div className="space-y-3 pt-2">
-                      <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer select-none">
+                      <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100/50 cursor-pointer select-none transition-colors">
                         <input
                           type="checkbox"
                           className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={today.morning_completed}
                           onChange={() => toggleCalendarTask(today.day_number, 'morning_completed')}
                         />
-                        <span>🌅 Morning Task: {today.morning_task}</span>
+                        <span className="text-xs font-bold text-slate-700">🌅 Morning Task: {today.morning_task}</span>
                       </label>
-                      <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer select-none">
+                      <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100/50 cursor-pointer select-none transition-colors">
                         <input
                           type="checkbox"
                           className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={today.afternoon_completed}
                           onChange={() => toggleCalendarTask(today.day_number, 'afternoon_completed')}
                         />
-                        <span>☀️ Afternoon Task: {today.afternoon_task}</span>
+                        <span className="text-xs font-bold text-slate-700">☀️ Afternoon Task: {today.afternoon_task}</span>
                       </label>
-                      <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer select-none">
+                      <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100/50 cursor-pointer select-none transition-colors">
                         <input
                           type="checkbox"
                           className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
                           checked={today.evening_completed}
                           onChange={() => toggleCalendarTask(today.day_number, 'evening_completed')}
                         />
-                        <span>🌙 Evening Task: {today.evening_task}</span>
+                        <span className="text-xs font-bold text-slate-700">🌙 Evening Task: {today.evening_task}</span>
                       </label>
                     </div>
 
-                    <button
-                      className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg transition-colors text-xs mt-4 flex items-center gap-2"
-                      onClick={() => setSelectedDay(today)}
-                    >
-                      <FileText className="h-3.5 w-3.5" />
-                      Add Study Minutes & Reflections
-                    </button>
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                      <span className="text-xs text-slate-500">
+                        {today.completed ? '🎉 All tasks finished!' : 'Check off tasks to complete the day.'}
+                      </span>
+                      <button
+                        className="py-1.5 px-3 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                        onClick={() => setSelectedDay(today)}
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        Log Study Time & Reflections
+                      </button>
+                    </div>
                   </div>
-                );
-              })()}
-            </div>
+
+                  {/* Right Column: ALL Linked Questions for Today */}
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                        <Code className="h-4 w-4 text-brand-600" />
+                        Linked Practice Questions ({linkedQs.length})
+                      </h4>
+
+                      <div className="space-y-3 mt-3 max-h-[260px] overflow-y-auto pr-1">
+                        {linkedQs.map((qItem, idx) => (
+                          <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-brand-300 transition-colors space-y-2">
+                            <div className="flex justify-between items-start">
+                              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-100">
+                                {qItem.category.toUpperCase()} #{qItem.id}
+                              </span>
+                              {qItem.ai_score !== null && (
+                                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                  qItem.ai_score >= 8 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                }`}>
+                                  AI Score: {qItem.ai_score}/10
+                                </span>
+                              )}
+                            </div>
+
+                            <h5 className="text-xs font-bold text-slate-900 leading-snug">
+                              {qItem.question || qItem.title}
+                            </h5>
+
+                            <button
+                              className="w-full py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-lg text-[11px] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                              onClick={() => {
+                                setSelectedQuestion(qItem);
+                                setSelectedQuestionCategory(qItem.category);
+                                setWorkspaceCode(qItem.solution_code || '');
+                                setWorkspaceNotes(qItem.notes || '');
+                                setWorkspaceTab('code');
+                                setAiSubTab('schema');
+                              }}
+                            >
+                              <Play className="h-3 w-3 fill-white" />
+                              Open in Code Studio
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })()}
+
           </div>
         )}
 
@@ -1178,12 +1567,15 @@ export default function App() {
                 className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between h-24 shadow-sm hover:border-brand-500 hover:shadow-md ${
                   day.completed ? 'bg-teal-50/50 border-teal-200' : (day.penalized ? 'bg-red-50/50 border-red-200' : 'bg-white border-slate-200')
                 }`}
-                onClick={() => setSelectedDay(day)}
+                onClick={() => {
+                  setSelectedDay(day);
+                  setDashboardDayNumber(day.day_number);
+                }}
               >
                 <div className="flex justify-between items-start">
                   <span className="text-[10px] font-bold text-slate-400">Day {day.day_number}</span>
                   {day.completed && <Check className="text-teal-600 h-3.5 w-3.5 font-black" />}
-                  {day.penalized && <AlertTriangle className="text-red-500 h-3.5 w-3.5" />}
+                  {day.reward_claimed && <DollarSign className="text-emerald-600 h-3.5 w-3.5" />}
                 </div>
                 
                 <span className="text-xs font-bold text-slate-700 line-clamp-2 mt-1">
@@ -1207,7 +1599,7 @@ export default function App() {
             {/* Left Bank Picker */}
             <div className="w-60 flex flex-col gap-1.5 flex-shrink-0">
               {[
-                { id: 'sql', label: '💾 SQL Coding' },
+                { id: 'sql', label: '💾 SQL Coding Studio' },
                 { id: 'dsa', label: '🧩 DSA Algorithms' },
                 { id: 'pyspark', label: '📊 PySpark Big Data' },
                 { id: 'concepts', label: '📚 Core DE Concepts' },
@@ -1269,9 +1661,8 @@ export default function App() {
                       <th className="pb-3 text-center w-12">ID</th>
                       <th className="pb-3">Problem</th>
                       <th className="pb-3">Category</th>
-                      {activeQBankTab === 'sql' && <th className="pb-3">Topic</th>}
-                      {activeQBankTab === 'dsa' && <th className="pb-3">Pattern</th>}
-                      {(activeQBankTab === 'sql' || activeQBankTab === 'dsa') && <th className="pb-3">Difficulty</th>}
+                      <th className="pb-3">Topic / Pattern</th>
+                      <th className="pb-3">AI Score</th>
                       <th className="pb-3">Status</th>
                     </tr>
                   </thead>
@@ -1289,21 +1680,21 @@ export default function App() {
                         }}
                         className="border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer text-sm font-main"
                       >
-                        <td className="py-4 text-center text-slate-400">#{item.id}</td>
+                        <td className="py-4 text-center text-slate-400 font-mono">#{item.id}</td>
                         <td className="py-4 font-bold text-slate-800">{item.question || item.title}</td>
-                        <td className="py-4 text-slate-600">{item.category}</td>
-                        {activeQBankTab === 'sql' && <td className="py-4"><code className="font-code text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-700">{item.topic}</code></td>}
-                        {activeQBankTab === 'dsa' && <td className="py-4 text-slate-600">{item.pattern}</td>}
-                        {(activeQBankTab === 'sql' || activeQBankTab === 'dsa') && (
-                          <td className="py-4">
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                              (item.difficulty || '').toLowerCase() === 'easy' ? 'bg-emerald-50 text-emerald-700' :
-                              ((item.difficulty || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700')
+                        <td className="py-4 font-bold text-slate-700 text-xs uppercase">{item.category ? item.category : activeQBankTab.toUpperCase()}</td>
+                        <td className="py-4"><code className="font-code text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-700">{item.topic || item.pattern || 'General'}</code></td>
+                        <td className="py-4">
+                          {item.ai_score !== null && item.ai_score !== undefined ? (
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                              item.ai_score >= 8 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}>
-                              {item.difficulty}
+                              {item.ai_score}/10
                             </span>
-                          </td>
-                        )}
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-mono">Unscored</span>
+                          )}
+                        </td>
                         <td className="py-4">
                           {item.solved ? (
                             <span className="text-[10px] font-bold bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">✓ Solved</span>
@@ -1328,7 +1719,94 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= VIEW 4: MEGAPROJECTS ================= */}
+        {/* ================= VIEW 4: DE PLAYGROUND ================= */}
+        {activeTab === 'playground' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <BookOpen className="text-brand-600 h-5 w-5" />
+                  Data Engineering Concept Playground
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Select a topic or type custom questions to explore architectures, partitioning strategies, PySpark DataFrames, and Data Lake modeling.
+                </p>
+              </div>
+
+              {/* Topic buttons */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {[
+                  { id: 'scd', label: '🔄 SCD Type 1 vs Type 2' },
+                  { id: 'partitioning', label: '⚡ Partitioning vs Bucketing' },
+                  { id: 'pyspark', label: '🔥 PySpark RDD vs DataFrame' },
+                  { id: 'star_schema', label: '⭐ Star vs Snowflake Schema' },
+                  { id: 'etl_elt', label: '🔀 ETL vs ELT Architecture' },
+                  { id: 'kafka', label: '📡 Kafka Topics & Partitions' },
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    disabled={playgroundLoading}
+                    className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all border ${
+                      playgroundTopic === t.id ? 'bg-brand-600 text-white border-brand-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                    onClick={() => {
+                      setPlaygroundTopic(t.id);
+                      generatePlaygroundConcept(t.label, '');
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Ask AI prompt */}
+              <div className="flex gap-2 pt-2">
+                <input
+                  type="text"
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 text-xs"
+                  placeholder="Ask AI to explain any DE concept (e.g., How does Delta Lake handle ACID transactions?)..."
+                  value={playgroundPrompt}
+                  onChange={e => setPlaygroundPrompt(e.target.value)}
+                />
+                <button
+                  disabled={playgroundLoading}
+                  className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5"
+                  onClick={() => generatePlaygroundConcept('Custom Question', playgroundPrompt)}
+                >
+                  {playgroundLoading ? (
+                    <>
+                      <Loader2 className="animate-spin h-3.5 w-3.5" />
+                      Explaining...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Explain Concept
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Generated Explanation Content Pane */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm min-h-[300px]">
+              {playgroundLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
+                  <Loader2 className="animate-spin h-8 w-8 text-brand-600" />
+                  <span className="text-xs font-bold">AI Teacher is modeling diagrams & flashcards...</span>
+                </div>
+              ) : playgroundContent ? (
+                <div dangerouslySetInnerHTML={{ __html: parseMarkdown(playgroundContent) }} className="markdown-content font-main"></div>
+              ) : (
+                <div className="text-center py-20 text-slate-400 text-xs">
+                  Click any topic button above or type a custom question to generate interactive explanations!
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ================= VIEW 5: MEGAPROJECTS ================= */}
         {activeTab === 'projects' && (
           <div className="space-y-6">
             {db.projects.map(proj => (
@@ -1391,7 +1869,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= VIEW 5: CHEAT SHEETS ================= */}
+        {/* ================= VIEW 6: CHEAT SHEETS ================= */}
         {activeTab === 'cheatsheets' && (
           <div className="space-y-6">
             {Object.keys(db.cheat_sheets).map(key => {
@@ -1418,7 +1896,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= VIEW 6: ADMIN COCKPIT ================= */}
+        {/* ================= VIEW 7: ADMIN COCKPIT ================= */}
         {activeTab === 'admin' && (
           <div>
             {!adminAuthenticated ? (
@@ -1430,7 +1908,7 @@ export default function App() {
                 <form onSubmit={handleAdminVerify} className="space-y-3">
                   <input
                     type="password"
-                    placeholder="Enter Admin PIN"
+                    placeholder="Enter Admin PIN (6565)"
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-sm text-center"
                     value={adminPinInput}
                     onChange={e => setAdminPinInput(e.target.value)}
@@ -1469,7 +1947,7 @@ export default function App() {
                         >
                           <div>
                             <div className="font-bold">{u.name}</div>
-                            <div className="text-[10px] opacity-80 mt-0.5">{u.email}</div>
+                            <div className="text-[10px] text-emerald-600 font-bold mt-0.5">₹{u.total_money_earned || 0} earned</div>
                           </div>
                           <button
                             className="py-1 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md text-[10px] font-bold"
@@ -1489,9 +1967,14 @@ export default function App() {
                 <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 h-[80vh] overflow-y-auto">
                   {adminSelectedUser ? (
                     <div className="space-y-6">
-                      <h3 className="text-lg font-black text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
-                        <User className="text-brand-600 h-5 w-5" />
-                        Student details: {adminSelectedUser.name}
+                      <h3 className="text-lg font-black text-slate-800 border-b border-slate-100 pb-3 flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <User className="text-brand-600 h-5 w-5" />
+                          Student details: {adminSelectedUser.name}
+                        </span>
+                        <span className="text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full">
+                          Total Earned: ₹{adminSelectedUser.total_money_earned || 0}
+                        </span>
                       </h3>
                       
                       <div className="flex gap-2 border-b border-slate-100 pb-3">
@@ -1517,9 +2000,9 @@ export default function App() {
                             <span className="text-xs text-slate-500 mt-1 block">{adminSelectedUser.xp} accumulated XP</span>
                           </div>
                           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Daily Streaks</span>
-                            <span className="text-2xl font-black text-slate-800 mt-1 block">{adminSelectedUser.current_streak} Days</span>
-                            <span className="text-xs text-slate-500 mt-1 block">Best streak: {adminSelectedUser.best_streak} Days</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Weekly Earnings</span>
+                            <span className="text-2xl font-black text-emerald-600 mt-1 block">₹{adminSelectedUser.weekly_money_earned || 0} / ₹1000</span>
+                            <span className="text-xs text-slate-500 mt-1 block">Max ₹1000/week</span>
                           </div>
                         </div>
                       )}
@@ -1548,13 +2031,14 @@ export default function App() {
                               <h4 className="text-sm font-bold text-slate-800">Day {adminInspectDay.day_number} Logs</h4>
                               <p className="text-xs text-slate-600"><strong>Curriculum Topic:</strong> {adminInspectDay.topic}</p>
                               <p className="text-xs text-slate-600"><strong>Study Time logged:</strong> {adminInspectDay.time_spent_minutes} mins</p>
-                              <p className="text-xs text-slate-600"><strong>Student Reflections:</strong> {adminInspectDay.notes || 'None written.'}</p>
+                              <p className="text-xs text-slate-600"><strong>Reward Earned:</strong> ₹{adminInspectDay.daily_reward_earned || 0} {adminInspectDay.reward_claimed ? '(Claimed)' : '(Unclaimed)'}</p>
+                              <p className="text-xs text-slate-600"><strong>Reflections:</strong> {adminInspectDay.notes || 'None written.'}</p>
                             </div>
                           )}
                         </div>
                       )}
 
-                      {/* Admin Tab 3: Code solutions */}
+                      {/* Admin Tab 3: Code solutions & AI Scores */}
                       {adminInspectTab === 'code' && adminSelectedUserProgress && (
                         <div className="flex gap-6">
                           <div className="w-56 space-y-3 flex-shrink-0">
@@ -1575,11 +2059,16 @@ export default function App() {
                                   <div
                                     key={q.id}
                                     onClick={() => setAdminInspectQId(q.id)}
-                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex justify-between items-center ${
                                       adminInspectQId === q.id ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'
                                     }`}
                                   >
-                                    #{q.id} {q.question || q.title}
+                                    <span className="truncate flex-1">#{q.id} {q.question || q.title}</span>
+                                    {q.ai_score !== null && (
+                                      <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-white text-[9px] font-mono">
+                                        {q.ai_score}/10
+                                      </span>
+                                    )}
                                   </div>
                                 ))}
                             </div>
@@ -1589,11 +2078,20 @@ export default function App() {
                             {(() => {
                               const list = adminSelectedUserProgress[`${adminInspectCategory === 'sql' ? 'sql_question_bank' : (adminInspectCategory === 'dsa' ? 'dsa_problems' : 'pyspark_questions')}`];
                               const q = list.find(item => item.id === adminInspectQId);
-                              if (!q) return <span className="text-slate-400 text-xs">Select a solved question to inspect their workspace.</span>;
+                              if (!q) return <span className="text-slate-400 text-xs">Select a solved question to inspect code solution & AI Score.</span>;
 
                               return (
                                 <div className="space-y-3">
-                                  <h4 className="text-sm font-bold text-slate-800">#{q.id} {q.question || q.title}</h4>
+                                  <div className="flex justify-between items-center">
+                                    <h4 className="text-sm font-bold text-slate-800">#{q.id} {q.question || q.title}</h4>
+                                    {q.ai_score !== null && (
+                                      <span className={`text-xs font-extrabold px-3 py-1 rounded-full ${
+                                        q.ai_score >= 8 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                      }`}>
+                                        AI Score: {q.ai_score}/10
+                                      </span>
+                                    )}
+                                  </div>
                                   <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl font-code text-xs overflow-x-auto max-h-[250px]">
                                     <code>{q.solution_code || 'No solution code submitted.'}</code>
                                   </pre>
@@ -1619,7 +2117,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= VIEW 7: SETTINGS ================= */}
+        {/* ================= VIEW 8: SETTINGS ================= */}
         {activeTab === 'settings' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -1843,18 +2341,27 @@ export default function App() {
           onClick={() => setSelectedQuestion(null)}
         >
           <div
-            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
+            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal header */}
             <div className="flex justify-between items-start border-b border-slate-200 p-6 bg-slate-50">
               <div>
-                <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full ${
-                  (selectedQuestion.difficulty || '').toLowerCase() === 'easy' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                  ((selectedQuestion.difficulty || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-rose-50 text-rose-700 border border-rose-100')
-                }`}>
-                  {selectedQuestion.difficulty || 'Concept'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full ${
+                    (selectedQuestion.difficulty || '').toLowerCase() === 'easy' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                    ((selectedQuestion.difficulty || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-rose-50 text-rose-700 border border-rose-100')
+                  }`}>
+                    {selectedQuestion.difficulty || 'Concept'}
+                  </span>
+                  {selectedQuestion.ai_score !== null && selectedQuestion.ai_score !== undefined && (
+                    <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full ${
+                      selectedQuestion.ai_score >= 8 ? 'bg-emerald-600 text-white shadow-sm' : 'bg-amber-500 text-white'
+                    }`}>
+                      AI Score: {selectedQuestion.ai_score}/10
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-lg font-black text-slate-900 mt-2">
                   #{selectedQuestion.id} {selectedQuestion.question || selectedQuestion.title}
                 </h3>
@@ -1870,11 +2377,13 @@ export default function App() {
             {/* Split Pane Details layout */}
             <div className="flex flex-1 overflow-hidden">
               
-              {/* Left pane: Question description */}
-              <div className="w-1/2 p-6 overflow-y-auto border-r border-slate-200 space-y-4 bg-slate-50/50">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Question Details</h4>
-                <div className="text-sm text-slate-700 leading-relaxed font-main">
-                  {selectedQuestion.description || selectedQuestion.question || "Core Data Engineering learning item. Write down your solution notes."}
+              {/* Left pane: Question description AND Interactive Schema Viewer */}
+              <div className="w-1/2 p-6 overflow-y-auto border-r border-slate-200 space-y-5 bg-slate-50/50">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Question Details</h4>
+                  <div className="text-sm text-slate-700 leading-relaxed font-main">
+                    {selectedQuestion.description || selectedQuestion.question || "Core Data Engineering learning item. Write down your solution notes."}
+                  </div>
                 </div>
 
                 {selectedQuestion.de_relevance && (
@@ -1883,6 +2392,62 @@ export default function App() {
                     <p className="text-xs text-slate-600 leading-relaxed">{selectedQuestion.de_relevance}</p>
                   </div>
                 )}
+
+                {/* Schema & Mock Data Visualizer */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Database className="h-3.5 w-3.5 text-brand-600" />
+                      Database Schema & Mock Data Tables
+                    </h4>
+                    <button
+                      disabled={schemaLoading}
+                      className="py-1 px-2.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1"
+                      onClick={generateSchemaMockTables}
+                    >
+                      {schemaLoading ? (
+                        <>
+                          <Loader2 className="animate-spin h-3 w-3" />
+                          Generating Tables...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3 w-3" />
+                          {selectedQuestion.ai_schema_context ? 'Regenerate Tables' : 'Generate Tables'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {selectedQuestion.ai_schema_context ? (
+                    <div
+                      className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-xs leading-relaxed max-h-[300px] overflow-y-auto markdown-content"
+                      dangerouslySetInnerHTML={{ __html: parseMarkdown(selectedQuestion.ai_schema_context) }}
+                    ></div>
+                  ) : (
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 text-center space-y-2">
+                      <Database className="h-6 w-6 text-slate-300 mx-auto" />
+                      <p className="text-xs text-slate-500">No mock tables generated for this question yet.</p>
+                      <button
+                        disabled={schemaLoading}
+                        className="py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 mx-auto"
+                        onClick={generateSchemaMockTables}
+                      >
+                        {schemaLoading ? (
+                          <>
+                            <Loader2 className="animate-spin h-3.5 w-3.5" />
+                            Generating Tables...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Generate Schema & Sample Tables
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Right pane: Tabs and editors */}
@@ -1896,7 +2461,7 @@ export default function App() {
                       }`}
                       onClick={() => setWorkspaceTab(t)}
                     >
-                      {t === 'code' ? '💻 Editor' : (t === 'notes' ? '📝 Notes' : '🤖 AI Coach')}
+                      {t === 'code' ? '💻 Editor' : (t === 'notes' ? '📝 Notes' : '🤖 AI Auto-Scorer')}
                     </button>
                   ))}
                 </div>
@@ -1905,24 +2470,33 @@ export default function App() {
                 {workspaceTab === 'code' && (
                   <div className="flex-1 flex flex-col justify-between gap-4">
                     <textarea
-                      className="w-full flex-1 p-4 bg-slate-900 text-slate-100 rounded-xl font-code text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500/20 max-h-[350px] min-h-[250px]"
+                      className="w-full flex-1 p-4 bg-slate-900 text-slate-100 rounded-xl font-code text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500/20 max-h-[360px] min-h-[260px]"
                       value={workspaceCode}
                       onChange={e => setWorkspaceCode(e.target.value)}
                       placeholder={selectedQuestionCategory === 'sql' ? "-- Write your SQL query solution here..." : "# Write your Python/PySpark solution here..."}
                     />
 
                     <div className="flex justify-between items-center border-t border-slate-100 pt-3">
-                      <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500"
-                          checked={selectedQuestion.solved || false}
-                          onChange={e => handleSolveQuestion(e.target.checked)}
-                        />
-                        <span>Mark as Solved</span>
-                      </label>
                       <button
-                        className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center gap-2"
+                        disabled={evalLoading}
+                        className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center gap-2 shadow-sm"
+                        onClick={evaluateAndRateSolution}
+                      >
+                        {evalLoading ? (
+                          <>
+                            <Loader2 className="animate-spin h-3.5 w-3.5" />
+                            Evaluating & Scoring...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Evaluate & Auto-Score Code (0-10)
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        className="py-2 px-4 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5"
                         onClick={() => handleSolveQuestion(true)}
                       >
                         <Save className="h-3.5 w-3.5" />
@@ -1936,7 +2510,7 @@ export default function App() {
                 {workspaceTab === 'notes' && (
                   <div className="flex-1 flex flex-col justify-between gap-4">
                     <textarea
-                      className="w-full flex-1 p-4 border border-slate-200 rounded-xl font-main text-xs leading-relaxed focus:outline-none focus:border-brand-500 max-h-[350px] min-h-[250px]"
+                      className="w-full flex-1 p-4 border border-slate-200 rounded-xl font-main text-xs leading-relaxed focus:outline-none focus:border-brand-500 max-h-[360px] min-h-[260px]"
                       value={workspaceNotes}
                       onChange={e => setWorkspaceNotes(e.target.value)}
                       placeholder="Write your study notes, doubts, edge cases or alternative approaches..."
@@ -1950,11 +2524,11 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Subtab 3: AI Coach */}
+                {/* Subtab 3: AI Auto-Scorer & Hints */}
                 {workspaceTab === 'coach' && (
                   <div className="flex-1 flex flex-col justify-between gap-4">
                     <div className="flex gap-2 border-b border-slate-100 pb-2">
-                      {['schema', 'hint', 'chat'].map(t => (
+                      {['hint', 'chat'].map(t => (
                         <button
                           key={t}
                           className={`py-1 px-2.5 rounded-lg text-[10px] font-bold capitalize transition-colors ${
@@ -1962,56 +2536,62 @@ export default function App() {
                           }`}
                           onClick={() => setAiSubTab(t)}
                         >
-                          {t === 'schema' ? '📊 Model Tables' : (t === 'hint' ? '💡 Grade Solution' : '💬 Chat doubts')}
+                          {t === 'hint' ? '🏆 AI Review & Score' : '💬 Chat Doubts'}
                         </button>
                       ))}
                     </div>
 
-                    <div className="flex-1 border border-slate-200 rounded-xl p-4 bg-slate-50 overflow-y-auto text-xs leading-relaxed max-h-[260px] min-h-[220px]">
-                      {aiLoading && (
+                    <div className="flex-1 border border-slate-200 rounded-xl p-4 bg-slate-50 overflow-y-auto text-xs leading-relaxed max-h-[280px] min-h-[230px]">
+                      {evalLoading && (
                         <div className="flex flex-col justify-center items-center gap-2 pt-12 text-slate-500">
                           <Loader2 className="animate-spin h-6 w-6 text-brand-600" />
-                          <span>Coach is formulating review...</span>
+                          <span>AI Coach is grading your solution against schema constraints...</span>
                         </div>
                       )}
 
-                      {aiError && (
-                        <span className="text-rose-600 font-bold">❌ Error: {aiError}</span>
-                      )}
-
-                      {!aiLoading && !aiError && (
+                      {!evalLoading && (
                         <>
-                          {/* Schema/Tables */}
-                          {aiSubTab === 'schema' && (
-                            selectedQuestion.ai_schema_context ? (
-                              <div dangerouslySetInnerHTML={{ __html: parseMarkdown(selectedQuestion.ai_schema_context) }}></div>
-                            ) : (
-                              <div className="flex flex-col items-center gap-3 pt-12 text-slate-500 text-center">
-                                <HelpCircle className="h-8 w-8 text-slate-300" />
-                                <span>No reference database schemas generated yet.</span>
-                                <button
-                                  className="py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-[10px] transition-colors"
-                                  onClick={generateSchemaMockTables}
-                                >
-                                  🤖 Generate Reference Tables & Schema
-                                </button>
-                              </div>
-                            )
-                          )}
-
                           {/* Grade code */}
                           {aiSubTab === 'hint' && (
                             selectedQuestion.ai_code_review_hint ? (
-                              <div dangerouslySetInnerHTML={{ __html: parseMarkdown(selectedQuestion.ai_code_review_hint) }}></div>
+                              <div className="space-y-3">
+                                {selectedQuestion.ai_score !== null && (
+                                  <div className={`p-3 rounded-xl border flex items-center justify-between shadow-sm ${
+                                    selectedQuestion.ai_score >= 8 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'
+                                  }`}>
+                                    <div className="flex items-center gap-2">
+                                      <Award className={`h-5 w-5 ${selectedQuestion.ai_score >= 8 ? 'text-emerald-600' : 'text-amber-600'}`} />
+                                      <span className="font-extrabold text-sm">
+                                        AI Score Result: {selectedQuestion.ai_score}/10
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/60">
+                                      {selectedQuestion.ai_score >= 8 ? 'High Distinction 🏆' : 'Needs Work 💡'}
+                                    </span>
+                                  </div>
+                                )}
+                                <div dangerouslySetInnerHTML={{ __html: parseMarkdown(selectedQuestion.ai_code_review_hint) }} className="markdown-content"></div>
+                              </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3 pt-12 text-slate-500 text-center">
                                 <TrendingUp className="h-8 w-8 text-slate-300" />
                                 <span>Coach has not graded your query yet.</span>
                                 <button
-                                  className="py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-[10px] transition-colors"
+                                  disabled={evalLoading}
+                                  className="py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5"
                                   onClick={evaluateAndRateSolution}
                                 >
-                                  🤖 Evaluate & Rate Code (1-10)
+                                  {evalLoading ? (
+                                    <>
+                                      <Loader2 className="animate-spin h-3.5 w-3.5" />
+                                      Evaluating...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Sparkles className="h-3.5 w-3.5" />
+                                      Grade & Auto-Score Code (0-10)
+                                    </>
+                                  )}
                                 </button>
                               </div>
                             )
@@ -2023,7 +2603,7 @@ export default function App() {
                               {(selectedQuestion.ai_chat_history || []).length === 0 ? (
                                 <div className="p-3 bg-brand-50/50 border border-brand-100 rounded-lg text-brand-700 flex gap-2">
                                   <MessageSquare className="h-4 w-4 mt-0.5 text-brand-600 flex-shrink-0" />
-                                  <span>👋 I am your AI Coach! Ask me doubts about your queries, logic, or syntax. I'll guide you to the answer.</span>
+                                  <span>👋 Ask me doubts about your queries, logic, or syntax. I'll guide you to the answer.</span>
                                 </div>
                               ) : (
                                 (selectedQuestion.ai_chat_history || []).map((msg, idx) => (
@@ -2034,7 +2614,7 @@ export default function App() {
                                     }`}
                                   >
                                     <strong>{msg.role === 'coach' ? '🤖 Coach' : '👤 You'}:</strong>
-                                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} className="mt-1"></div>
+                                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} className="markdown-content mt-1"></div>
                                   </div>
                                 ))
                               )}
@@ -2054,8 +2634,12 @@ export default function App() {
                           value={aiChatQuery}
                           onChange={e => setAiChatQuery(e.target.value)}
                         />
-                        <button type="submit" className="py-2 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors">
-                          Ask
+                        <button
+                          type="submit"
+                          disabled={chatLoading}
+                          className="py-2 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center gap-1"
+                        >
+                          {chatLoading ? <Loader2 className="animate-spin h-3 w-3" /> : 'Ask'}
                         </button>
                       </form>
                     )}
@@ -2066,6 +2650,101 @@ export default function App() {
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL 3: TODAY'S AI TOPIC QUIZ ================= */}
+      {quizModalOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-main"
+          onClick={() => setQuizModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-xl p-6 space-y-6 max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <BrainCircuit className="text-brand-600 h-5 w-5" />
+                Today's Topic AI Quiz
+              </h3>
+              <button
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                onClick={() => setQuizModalOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {quizLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-500">
+                <Loader2 className="animate-spin h-8 w-8 text-brand-600" />
+                <span className="text-xs font-bold">Generating 3 quiz questions...</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {quizQuestions.map((q, qIdx) => (
+                  <div key={qIdx} className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <h4 className="text-xs font-bold text-slate-800">
+                      Q{qIdx + 1}: {q.question}
+                    </h4>
+                    <div className="space-y-2">
+                      {q.options.map((opt, oIdx) => {
+                        const isSelected = quizAnswers[qIdx] === oIdx;
+                        const isCorrect = q.answerIndex === oIdx;
+
+                        let style = "bg-white border-slate-200 text-slate-700 hover:bg-slate-100";
+                        if (quizSubmitted) {
+                          if (isCorrect) style = "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold";
+                          else if (isSelected) style = "bg-rose-50 border-rose-300 text-rose-800 font-bold";
+                        } else if (isSelected) {
+                          style = "bg-brand-50 border-brand-500 text-brand-800 font-bold";
+                        }
+
+                        return (
+                          <div
+                            key={oIdx}
+                            className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${style}`}
+                            onClick={() => {
+                              if (!quizSubmitted) {
+                                setQuizAnswers({ ...quizAnswers, [qIdx]: oIdx });
+                              }
+                            }}
+                          >
+                            {opt}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {quizSubmitted && (
+                      <p className="text-[11px] text-slate-600 italic bg-white p-2.5 rounded-lg border border-slate-200">
+                        💡 <strong>Explanation:</strong> {q.explanation}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                  {!quizSubmitted ? (
+                    <button
+                      className="py-2.5 px-5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl text-xs transition-colors shadow-sm"
+                      onClick={submitQuiz}
+                    >
+                      Submit Answers
+                    </button>
+                  ) : (
+                    <button
+                      className="py-2.5 px-5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold rounded-xl text-xs transition-colors"
+                      onClick={() => setQuizModalOpen(false)}
+                    >
+                      Done
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
